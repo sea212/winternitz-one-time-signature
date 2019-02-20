@@ -2,4 +2,4 @@
 Contributors
 ============
 
-* Harald Heckmann <harald.b.heckmann@student.hs-rm.de>
+* Harald Heckmann <harald.heckmann93@web.de>

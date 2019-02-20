@@ -2,9 +2,12 @@
 Changelog
 =========
 
+Pre Version 0.1
+===============
+
+- Setup Project (structure, travis, tox, coverage, sphinx, git-prehooks)
+
 Version 0.1
 ===========
 
-- Feature A added
-- FIX: nasty bug #1729 fixed
-- add your changes here!
+- Not released yet!

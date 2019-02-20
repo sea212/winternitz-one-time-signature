@@ -3,19 +3,23 @@
 # THIS SCRIPT IS SUPPOSED TO BE AN EXAMPLE. MODIFY IT ACCORDING TO YOUR NEEDS!
 
 sudo: false
+dist: xenial
 language: python
-virtualenv:
-  system_site_packages: true
+# virtualenv:
+#  system_site_packages: true
 matrix:
   include:
     - os: linux
       python: 3.4
-      env: DISTRIB="ubuntu" COVERAGE="true"
-    - env: DISTRIB="conda" COVERAGE="false"
+      env: TOXARGS="-e py34" DISTRIB="ubuntu" COVERAGE="false"
+    - os: linux
+      python: 3.7
+      env: TOXARGS="-e py37" DISTRIB="ubuntu" COVERAGE="true"
 install:
   - source tests/travis_install.sh
   - travis_retry pip install pip setuptools --upgrade
   - travis_retry pip install tox
+  - if [[ "$COVERAGE" == "true" ]]; then travis_retry pip install coveralls; fi
   # ^  DEPRECATION WARNING:
   # The automatic creation of a `requirements.txt` file is deprecated.
   # See `Dependency Management` in the docs for other options.
@@ -29,7 +33,7 @@ before_script:
 script:
   # - python setup.py test
   # ^  Change here if using tox
-  - tox
+  - tox $TOXARGS
 after_success:
   - if [[ "$COVERAGE" == "true" ]]; then coveralls || echo "failed"; fi
 after_script:
