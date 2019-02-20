@@ -8,21 +8,31 @@ virtualenv:
   system_site_packages: true
 matrix:
   include:
-    - python: 3.4
+    - os: linux
+      python: 3.4
       env: DISTRIB="ubuntu" TOX_PYTHON_VERSION="py34" COVERAGE="true"
     - env: DISTRIB="conda" PYTHON_VERSION="3.6" COVERAGE="false"
+    - os: osx
+      language: generic  # workaround for osx (travis-ci #7132)
+      env: PYTHON_VERSION="3.6" COVERAGE="false"
 install:
   - source tests/travis_install.sh
-  - pip install -r requirements.txt
+  - travis_retry pip install pip setuptools --upgrade
+  - travis_retry pip install tox
   # ^  DEPRECATION WARNING:
   # The automatic creation of a `requirements.txt` file is deprecated.
   # See `Dependency Management` in the docs for other options.
 before_script:
-  - git config --global user.email "you@example.com"
-  - git config --global user.name "Your Name"
+  # - git config --global user.email "you@example.com"
+  # - git config --global user.name "Your Name"
+  - rm -rf .coverage
+  - python --version
+  - pip --version
+  - pip freeze
 script:
-  - python setup.py test
+  # - python setup.py test
   # ^  Change here if using tox
+  - tox -r all
 after_success:
   - if [[ "$COVERAGE" == "true" ]]; then coveralls || echo "failed"; fi
 after_script:

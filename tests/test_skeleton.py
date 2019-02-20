@@ -2,8 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import pytest
-
-from wotsplus.skeleton import fib
+from wots.skeleton import fib
 
 __author__ = "Harald Heckmann"
 __copyright__ = "Harald Heckmann"

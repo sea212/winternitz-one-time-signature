@@ -8,10 +8,10 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import inspect
 import os
-import shutil
 import sys
+import inspect
+import shutil
 
 __location__ = os.path.join(os.getcwd(), os.path.dirname(
     inspect.getfile(inspect.currentframe())))
@@ -35,7 +35,7 @@ except ImportError:
     from sphinx import apidoc
 
 output_dir = os.path.join(__location__, "api")
-module_dir = os.path.join(__location__, "../src/wotsplus")
+module_dir = os.path.join(__location__, "../src/wots")
 try:
     shutil.rmtree(output_dir)
 except FileNotFoundError:
@@ -83,7 +83,7 @@ def setup(app):
         'enable_inline_math': True
     }, True)
     app.add_transform(AutoStructify)
-
+    
 # Additional parsers besides rst
 source_parsers = {
    '.md': 'recommonmark.parser.CommonMarkParser',
@@ -99,7 +99,7 @@ source_suffix = ['.rst', '.md']
 master_doc = 'index'
 
 # General information about the project.
-project = u'wotsplus'
+project = u'wots'
 copyright = u'2019, Harald Heckmann'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -169,7 +169,7 @@ html_theme_options = {
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
 try:
-    from wotsplus import __version__ as version
+    from wots import __version__ as version
 except ImportError:
     pass
 else:
@@ -234,7 +234,7 @@ html_static_path = ['_static']
 # html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'wotsplus-doc'
+htmlhelp_basename = 'wots-doc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -253,7 +253,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'user_guide.tex', u'wotsplus Documentation',
+  ('index', 'user_guide.tex', u'wots Documentation',
    u'Harald Heckmann', 'manual'),
 ]
 

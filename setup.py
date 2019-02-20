@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-    Setup file for wotsplus.
+    Setup file for wots.
     Use setup.cfg to configure your project.
 
     This file was generated with PyScaffold 3.1.
@@ -9,7 +9,8 @@
     Learn more under: https://pyscaffold.org/
 """
 import sys
-from pkg_resources import VersionConflict, require
+
+from pkg_resources import require, VersionConflict
 from setuptools import setup
 
 try:

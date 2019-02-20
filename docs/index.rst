@@ -1,8 +1,8 @@
-========
-wotsplus
-========
+====
+wots
+====
 
-This is the documentation of **wotsplus**.
+This is the documentation of **wots**.
 
 .. note::
 
