@@ -11,10 +11,10 @@ matrix:
   include:
     - os: linux
       python: 3.4
-      env: TOXARGS="-e py34" DISTRIB="ubuntu" COVERAGE="false"
+      env: TOXARGS="-e py34,lint" DISTRIB="ubuntu" COVERAGE="false"
     - os: linux
       python: 3.7
-      env: TOXARGS="-e py37" DISTRIB="ubuntu" COVERAGE="true"
+      env: TOXARGS="-e py37,lint" DISTRIB="ubuntu" COVERAGE="true"
 install:
   - source tests/travis_install.sh
   - travis_retry pip install pip setuptools --upgrade
