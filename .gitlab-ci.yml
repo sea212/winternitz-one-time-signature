@@ -32,13 +32,8 @@ before_script:
 
 # Run in different environments
 
-py32:
-  image: "python:3.3"
-  script:
-  - python setup.py test
-
-py36:
-  image: "python:3.7"
+py34:
+  image: "python:3.4"
   script:
   - python setup.py test
 
@@ -48,10 +43,19 @@ py37:
   - python setup.py test
 
 docs:
+  image: "python:3.7"
   before_script:
-  - pip install Sphinx
+  - pip install .[docs]
   script:
   - python setup.py docs
+
+lint:
+  image: "python:3.7"
+  before_script:
+  - pip install .[lint]
+  script:
+  - flake8 setup.py winternitz tests
+  - isort --recursive --check-only --dif
 
 # This deploy job uses a simple deploy flow to Heroku, other providers, e.g. AWS Elastic Beanstalk
 # are supported too: https://github.com/travis-ci/dpl
