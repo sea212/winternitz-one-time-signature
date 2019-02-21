@@ -6,7 +6,7 @@ console script. To run this script uncomment the following lines in the
 [options.entry_points] section in setup.cfg:
 
     console_scripts =
-         fibonacci = wots.skeleton:run
+         fibonacci = winternitz.skeleton:run
 
 Then run `python setup.py install` which will install the command `fibonacci`
 inside your current environment.
@@ -17,10 +17,10 @@ Note: This skeleton file can be safely removed if not needed!
 """
 
 import argparse
-import sys
 import logging
+import sys
 
-from wots import __version__
+from winternitz import __version__
 
 __author__ = "Harald Heckmann"
 __copyright__ = "Harald Heckmann"
@@ -59,7 +59,7 @@ def parse_args(args):
     parser.add_argument(
         '--version',
         action='version',
-        version='wots {ver}'.format(ver=__version__))
+        version='winternitz {ver}'.format(ver=__version__))
     parser.add_argument(
         dest="n",
         help="n-th Fibonacci number",

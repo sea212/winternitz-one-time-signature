@@ -1,8 +1,8 @@
 ====
-wots
+winternitz
 ====
 
-This is the documentation of **wots**.
+This is the documentation of **winternitz**.
 
 .. note::
 

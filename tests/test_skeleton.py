@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import pytest
-from wots.skeleton import fib
+
+from winternitz.skeleton import fib
 
 __author__ = "Harald Heckmann"
 __copyright__ = "Harald Heckmann"

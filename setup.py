@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-    Setup file for wots.
+    Setup file for winternitz.
     Use setup.cfg to configure your project.
 
     This file was generated with PyScaffold 3.1.
@@ -9,8 +9,7 @@
     Learn more under: https://pyscaffold.org/
 """
 import sys
-
-from pkg_resources import require, VersionConflict
+from pkg_resources import VersionConflict, require
 from setuptools import setup
 
 try:
