@@ -1,10 +1,10 @@
-from hashlib import blake2b
+from hashlib import sha256
 from typing import List, Optional
 
 
 # Paper describing WOTS: https://eprint.iacr.org/2011/191.pdf
 class WOTS(object):
-    def __init__(w: int, hashalgo: List[int] = blake2b, digestsize=256,
+    def __init__(w: int, hashalgo: List[int] = sha256, digestsize=256,
                  privkey: Optional[List[bytes]] = None,
                  pubkey: Optional[List[bytes]] = None):
         # TODO
@@ -65,7 +65,7 @@ class WOTS(object):
 # Paper descirbing WOTS+: https://eprint.iacr.org/2017/965.pdf
 class WOTSPLUS(WOTS):
     def __init__(w: int, privkey: Optional[List[bytes]] = None,
-                 hashalgo: List[int] = blake2b, digestsize=256,
+                 hashalgo: List[int] = sha256, digestsize=256,
                  seed: Optional[bytes] = None):
         super().__init__(w, privkey, hashalgo, digestsize)
         # TODO
