@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from hashlib import blake2b
+from hashlib import sha256
 from math import ceil, floor, log2
 from os import urandom
 from typing import Any, List, Optional
@@ -34,7 +34,7 @@ class AbstractOTS(object, metaclass=ABCMeta):
 class WOTS(AbstractOTS):
     def __init__(self,
                  w_log2: int,
-                 hash_function: Any = blake2b,  # TODO: correct Type
+                 hash_function: Any = sha256,  # TODO: correct Type
                  digestsize: int = 256,
                  privkey: Optional[List[bytes]] = None,
                  pubkey: Optional[List[bytes]] = None) -> None:
@@ -145,7 +145,7 @@ class WOTS(AbstractOTS):
 class WOTSPLUS(WOTS):
     def __init__(self,
                  w_log2: int,
-                 hash_function: Any = blake2b,  # TODO: correct Type
+                 hash_function: Any = sha256,  # TODO: correct Type
                  # TODO: Pseudo Random Function for Key and BM derivation
                  digestsize: int = 256,
                  privkey: Optional[List[bytes]] = None,
