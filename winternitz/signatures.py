@@ -8,6 +8,7 @@ __author__ = "Harald Heckmann"
 __copyright__ = "Harald Heckmann"
 __license__ = "mit"
 
+
 # Abstract definition of OTS class
 class AbstractOTS(object, metaclass=ABCMeta):
     @abstractmethod
