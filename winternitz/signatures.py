@@ -4,6 +4,10 @@ from math import ceil, floor, log2
 from os import urandom
 from typing import Any, List, Optional
 
+__author__ = "Harald Heckmann"
+__copyright__ = "Harald Heckmann"
+__license__ = "mit"
+
 
 # Abstract definition of OTS class
 class AbstractOTS(object, metaclass=ABCMeta):
@@ -34,7 +38,7 @@ class AbstractOTS(object, metaclass=ABCMeta):
 class WOTS(AbstractOTS):
     def __init__(self,
                  w_log2: int,
-                 hash_function: Any = sha256,  # TODO: correct Type
+                 hash_class: Any = sha256,  # TODO: correct Type
                  digestsize: int = 256,
                  privkey: Optional[List[bytes]] = None,
                  pubkey: Optional[List[bytes]] = None) -> None:
@@ -52,7 +56,7 @@ class WOTS(AbstractOTS):
         self.__key_count = self.__msg_key_count + self.__cs_key_count
 
         # Hashing algorithm
-        self.__hash_function = hash_function
+        self.__hash_class = hash_class
         self.__digest_size = digestsize
 
         # Keys
@@ -85,46 +89,59 @@ class WOTS(AbstractOTS):
             self.__pubkey = pubkey.copy()
 
     def __repr__(self) -> str:
-        # TODO
-        pass
+        repr = "winternitz.signatures.WOTS(w_log2={}, hash_class={}, " + \
+               "digestsize={}, "
+        repr = repr.format(self.w, str(self.hashclass.__module__) +
+                           "." + str(self.hashclass.__qualname__),
+                           self.digestsize)
+
+        if self.privkey is None:
+            return repr + "pubkey=" + str(self.pubkey) + ")"
+        else:
+            return repr + "privkey=" + str(self.privkey) + ")"
 
     def __str__(self) -> str:
-        # TODO
-        pass
+        fstr = "Package: winternitz\nLibrary: signatures\nClass: WOTS\n" + \
+               "Winternitz Parameter (log2): {}\nHash algorithm: {}\n" + \
+               "Digest size: {}\n"
+        fstr += "Private key:\n" if self.privkey is not None else \
+                "Public key:\n"
+
+        for idx, key in enumerate(self.privkey if self.privkey is not None
+                                  else self.pubkey):
+            fstr += "\t[{}] {}\n".format(idx, key)
+
+        return fstr.format(self.w, self.hashclass.__qualname__,
+                           self.digestsize)
 
     def __eq__(self, obj: Any) -> bool:
-        # TODO
-        pass
+        return isinstance(obj, self.__class__) and self.w == obj.w and \
+            self.hashclass == obj.hashclass and self.digestsize == \
+            obj.digestsize and self.privkey == obj.privkey and \
+            self.pubkey == obj.pubkey
 
     def __ne__(self, obj: Any) -> bool:
-        # TODO
-        pass
+        return not self.__eq__(obj)
 
     @property
     def privkey(self) -> List[bytes]:
-        # TODO: get privkey
-        pass
+        return self.__privkey.copy()
 
     @property
     def pubkey(self) -> List[bytes]:
-        # TODO: get privkey
-        pass
+        return self.__pubkey.copy()
 
     @property
     def w(self) -> int:
         return self.__w_log2
-        # TODO: get Winternitz parameter
-        pass
 
     @property
-    def hashalgo(self) -> Any:  # TODO: correct Type
-        # TODO: get hashalgorithm
-        pass
+    def hashclass(self) -> Any:  # TODO: correct Type
+        return self.__hash_class
 
     @property
     def digestsize(self) -> int:
-        # TODO: get digestsize
-        pass
+        return self.__digest_size
 
     def _derivePubKey(self) -> None:
         # TODO:
@@ -145,36 +162,47 @@ class WOTS(AbstractOTS):
 class WOTSPLUS(WOTS):
     def __init__(self,
                  w_log2: int,
-                 hash_function: Any = sha256,  # TODO: correct Type
+                 hash_class: Any = sha256,  # TODO: correct Type
                  # TODO: Pseudo Random Function for Key and BM derivation
                  digestsize: int = 256,
                  privkey: Optional[List[bytes]] = None,
                  pubkey: Optional[List[bytes]] = None,
                  seed: Optional[bytes] = None):
 
-        super().__init__(w_log2, hash_function=hash_function,
+        super().__init__(w_log2, hash_class=hash_class,
                          digestsize=digestsize, privkey=privkey,
                          pubkey=pubkey)
-        # TODO
-        # Only init seed if it is not None
-        # Store prf
+
+        if seed is None:
+            seed = urandom(int(ceil(digestsize/8)))
+
+        self.__seed = seed
+        # TODO: store prf
         pass
 
     def __repr__(self) -> str:
-        # TODO
-        pass
+        # TODO: add prf
+        return super().__repr__().replace("WOTS", "WOTSPLUS")[:-1] + \
+               ", seed=" + str(self.seed) + ")"
 
     def __str__(self) -> str:
-        # TODO
-        pass
+        # TODO: add prf
+        sstr = super().__str__().replace("WOTS", "WOTSPLUS")
+        strsplit = sstr.split("Public key:" if self.privkey is None else
+                              "Private key:")
+        result = strsplit[0] + "Seed: " + str(self.__seed) + \
+            ("\nPublic key: " if self.privkey is None else
+             "\nPrivate key: ") + strsplit[1]
+
+        return result
 
     def __eq__(self, obj) -> bool:
-        # TODO
-        pass
+        # TODO: add prf
+        return super().__eq__(obj) and isinstance(obj, self.__class__) and \
+            self.seed == obj.seed
 
     def __ne__(self, obj) -> bool:
-        # TODO
-        pass
+        return not self.__eq__(obj)
 
     def _derivePubKey(self) -> None:
         # TODO:
@@ -182,8 +210,7 @@ class WOTSPLUS(WOTS):
 
     @property
     def seed(self) -> bytes:
-        # TODO: get seed
-        pass
+        return self.__seed
 
     @property
     def prf(self):
