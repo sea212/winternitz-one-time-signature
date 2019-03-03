@@ -16,9 +16,9 @@ def test_underscore_functions_and_getter():
     # TODO: write some serious tests
     # Init
     wots = WOTS(4)
-    wots2 = WOTS(6)
+    wots2 = WOTS(16)
     wotsp = WOTSPLUS(4)
-    wotsp2 = WOTSPLUS(6)
+    wotsp2 = WOTSPLUS(16)
 
     # Object representation
     _ = wots.__repr__()
