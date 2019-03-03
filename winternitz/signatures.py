@@ -47,7 +47,7 @@ class WOTS(AbstractOTS):
                  privkey: Optional[List[bytes]] = None,
                  pubkey: Optional[List[bytes]] = None) -> None:
 
-        if not(2 <= w <= digestsize):
+        if not (2 <= w <= digestsize):
             raise ValueError("Rule broken: 2 <= w <= digestsize")
 
         self.__w = w
