@@ -16,13 +16,13 @@ def test_underscore_functions_and_getter():
     # TODO: write some serious tests
     # Init
     wots = WOTS(4)
-    wots2 = WOTS(6)
+    wots2 = WOTS(16)
     wotsp = WOTSPLUS(4)
-    wotsp2 = WOTSPLUS(6)
+    wotsp2 = WOTSPLUS(16)
 
     # Object representation
     _ = wots.__repr__()
-    _ = wots.__str__()
+    _ = wots2.__str__()
     _ = wotsp.__repr__()
     _ = wotsp2.__str__()  # noqa: F841
 
