@@ -1,5 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from hashlib import sha256
+from hmac import new as new_hmac
 from math import ceil, floor, log2
 from os import urandom
 from typing import Any, List, Optional
@@ -7,6 +8,14 @@ from typing import Any, List, Optional
 __author__ = "Harald Heckmann"
 __copyright__ = "Harald Heckmann"
 __license__ = "mit"
+
+
+def openssl_sha256(message: bytes) -> bytes:
+    return sha256(message).digest()
+
+
+def hmac_openssl_sha256(key: bytes, message: bytes) -> bytes:
+    return new_hmac(key=key, msg=message, digestmod=sha256).digest()
 
 
 # Abstract definition of OTS class
@@ -26,10 +35,6 @@ class AbstractOTS(object, metaclass=ABCMeta):
     @abstractmethod
     def __ne__(self, obj: Any) -> bool:
         raise NotImplementedError("Non-equality checks are required")
-
-
-def openssl_sha256(message: bytes) -> bytes:
-    return sha256(message).digest()
 
 
 # Paper describing WOTS: https://eprint.iacr.org/2011/191.pdf
@@ -174,65 +179,65 @@ class WOTS(AbstractOTS):
 
 # Paper descirbing WOTS+: https://eprint.iacr.org/2017/965.pdf
 # "W-OTS+ – Shorter Signatures for Hash-BasedSignature Schemes"
-# https://tools.ietf.org/html/rfc8391#section-5
 class WOTSPLUS(WOTS):
     def __init__(self,
                  w: int,
                  hash_function: Any = openssl_sha256,  # TODO: correct Type
-                 # TODO: Pseudo Random Function for Key and BM derivation
+                 prf: Any = hmac_openssl_sha256,  # TODO: correct Type
                  digestsize: int = 256,
+                 seed: Optional[bytes] = None,
                  privkey: Optional[List[bytes]] = None,
-                 pubkey: Optional[List[bytes]] = None,
-                 seed: Optional[bytes] = None):
+                 pubkey: Optional[List[bytes]] = None):
 
         super().__init__(w, hash_function=hash_function,
                          digestsize=digestsize, privkey=privkey,
                          pubkey=pubkey)
 
-        if seed is None:
-            seed = urandom(int(ceil(digestsize/8)))
-
         self.__seed = seed
-        # TODO: store prf
-        pass
+        self.__prf = prf
 
     def __repr__(self) -> str:
-        # TODO: add prf
         return super().__repr__().replace("WOTS", "WOTSPLUS")[:-1] + \
-               ", seed=" + str(self.seed) + ")"
+               ", seed={}, prf={})".format(str(self.seed),
+                                           str(self.prf.__module__) + "." +
+                                           str(self.prf.__qualname__))
 
     def __str__(self) -> str:
-        # TODO: add prf
         sstr = super().__str__().replace("WOTS", "WOTSPLUS")
         strsplit = sstr.split("Public key:" if self.privkey is None else
                               "Private key:")
-        result = strsplit[0] + "Seed: " + str(self.__seed) + \
-            ("\nPublic key: " if self.privkey is None else
-             "\nPrivate key: ") + strsplit[1]
+        result = strsplit[0] \
+            + "Pseudo random function: " + str(self.prf.__qualname__) \
+            + "\nSeed: " + hex(int.from_bytes(self.seed, "big")) \
+            + ("\nPublic key: " if self.privkey is None else
+               "\nPrivate key: ") + strsplit[1]
 
         return result
 
     def __eq__(self, obj) -> bool:
-        # TODO: add prf
         return super().__eq__(obj) and isinstance(obj, self.__class__) and \
-            self.seed == obj.seed
+            self.seed == obj.seed and self.prf == obj.prf
 
     def __ne__(self, obj) -> bool:
         return not self.__eq__(obj)
 
     @property
     def seed(self) -> bytes:
+        if self.__seed is None:
+            self.__seed = urandom(int(ceil(self.digestsize / 8)))
+
         return self.__seed
 
     @property
     def prf(self):
-        # TODO: get pseudo random function
-        pass
+        return self.__prf
 
+    """
     # https://tools.ietf.org/html/rfc8391#section-3.1.2
     def _chain(self) -> None:
         # TODO:
         pass
+    """
 
     def sign(message: bytes) -> dict:
         # TODO: implement sign algorithm

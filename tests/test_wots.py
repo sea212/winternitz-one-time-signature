@@ -22,7 +22,7 @@ def test_underscore_functions_and_getter():
 
     # Object representation
     _ = wots.__repr__()
-    _ = wots.__str__()
+    _ = wots2.__str__()
     _ = wotsp.__repr__()
     _ = wotsp2.__str__()  # noqa: F841
 
