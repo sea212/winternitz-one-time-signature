@@ -1,14 +1,14 @@
-|Build Status| |Coverage Status| |License: MIT| |Documentation Status|
+|Build Status| |Coverage Status| |Documentation Status| |License: MIT|
 
-Winternitz One-Time-Signatures
+Winternitz One-Time-Signature
 ==============================
 
-Python implementation of Winternitz one-time-signatures schemes
+Python implementation of Winternitz one-time-signature schemes
 
 Description
 -----------
 
-Winternitz one-time-signatures are an extension of lamport one-time-signatures.
+Winternitz one-time-signature is an extension of lamport one-time-signature.
 This python package can be used to execute WOTS operations, including
 key generation, signature generation and signature verification.
 Currently WOTS and WOTS+ are implemented.
@@ -27,7 +27,7 @@ once and compares it to one verification key for this position, depending on the
 of the bit. The signature is valid, if and only if all derived verification keys match with
 your published verification key at the correct position of the 2-tuple, which is determined by the value
 of the bit. This algorithm is quite fast
-(comparing it to existing PQC-algorithms), but the signatures sizes are huge.
+(comparing it to existing PQC-algorithms), but the signature sizes are huge.
 
 Winternitz extension
 ~~~~~~~~~~~~~~~~~~~
@@ -83,11 +83,16 @@ information on PyScaffold see `https://pyscaffold.org/`_.
 
 .. _`https://pyscaffold.org/`: https://pyscaffold.org/
 
+.. image:: https://readthedocs.org/projects/winternitz-one-time-signature/badge/?version=latest
+:target: https://winternitz-one-time-signature.readthedocs.io/en/latest/?badge=latest
+:alt: Documentation Status
+
 .. |Build Status| image:: https://www.travis-ci.com/sea212/winternitz-one-time-signature.svg?branch=master
    :target: https://www.travis-ci.com/sea212/winternitz-one-time-signature
 .. |Coverage Status| image:: https://coveralls.io/repos/github/sea212/winternitz-one-time-signature/badge.svg?branch=master
    :target: https://coveralls.io/github/sea212/winternitz-one-time-signature?branch=master
+.. |Documentation Status| image:: https://readthedocs.org/projects/winternitz-one-time-signature/badge/?version=latest
+   :target: https://winternitz-one-time-signature.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
 .. |License: MIT| image:: https://img.shields.io/badge/License-MIT-yellow.svg
    :target: https://opensource.org/licenses/MIT
-.. |Documentation Status| image:: https://readthedocs.org/projects/winternitz-one-time-signatures/badge/?version=latest
-   :target: https://winternitz-one-time-signatures.readthedocs.io/en/latest/?badge=latest

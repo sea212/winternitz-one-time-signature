@@ -144,7 +144,7 @@ class WOTS(AbstractOTS):
     @property
     def pubkey(self) -> List[bytes]:
         if self.__pubkey is None:
-            self.__pubkey = [self._chain(privkey, 0, self.__w)
+            self.__pubkey = [self._chain(privkey, 0, self.__w - 1)
                              for privkey in self.privkey]
 
         return self.__pubkey.copy()
@@ -161,18 +161,52 @@ class WOTS(AbstractOTS):
     def digestsize(self) -> int:
         return self.__digest_size
 
-    def _chain(self, value: bytes, startidx: int, endidx: int):
+    def _chain(self, value: bytes, startidx: int, endidx: int) -> bytes:
         for i in range(startidx, endidx):
             value = self.__hash_function(value)
 
         return value
 
-    def sign(message: bytes) -> dict:
-        # TODO: implement sign algorithm
-        # Check if privkey none, throw exception  if it is
-        pass
+    def _checksum(self, values: List[int]) -> int:
+        # Inverse sum checksum
+        result = 0
 
-    def verify(message: bytes, signature: List[bytes]) -> bool:
+        for value in values:
+            result += self.w - 1 - value
+
+        return result
+
+    def sign(self, message: bytes) -> dict:
+        privkey = self.privkey
+
+        if privkey is None:
+            raise ValueError("Unable to sign the message, only a public key "
+                             + "was specified")
+
+        msghash = self.hashfunction(message)
+        bits = format(int.from_bytes(msghash, "big"), "b")
+        wl = int(ceil(log2(self.w)))
+        # No padding!
+        bitgroups = [int(bits[i:i + wl], 2)
+                     for i in range(0, len(bits), wl)]
+
+        if (len(bitgroups) != self.__msg_key_count):
+            err = "The fingerprint of the message could not be split into the"\
+                  + " expected amount of bitgroups. This is most likely "\
+                  + "because the digestsize specified does not match to the " \
+                  + " real digestsize of the specified hashfunction Excepted:"\
+                  + " {} bitgroups\nGot: {} bitgroups"
+            raise IndexError(err.format(self.__msg_key_count, len(bitgroups)))
+
+        signature = [self._chain(privkey[idx], 0, val)
+                     for idx, val in enumerate(bitgroups)]
+
+        # If the pubkey is not set yet, derive it from the signature
+        if (self.__pubkey is None):
+            self.__pubkey = [self._chain(signature[idx], bitgroups[val], )
+                             for idx, val in enumerate(bitgroups)]
+
+    def verify(self, message: bytes, signature: List[bytes]) -> bool:
         # TODO: implement verify algorithm
         pass
 
@@ -239,11 +273,11 @@ class WOTSPLUS(WOTS):
         pass
     """
 
-    def sign(message: bytes) -> dict:
+    def sign(self, message: bytes) -> dict:
         # TODO: implement sign algorithm
         # Check if privkey none, throw exception  if it is
         pass
 
-    def verify(message: bytes, signature: List[bytes]) -> bool:
+    def verify(self, message: bytes, signature: List[bytes]) -> bool:
         # TODO: implement verify algorithm
         pass
