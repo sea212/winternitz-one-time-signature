@@ -59,8 +59,8 @@ class WOTS(AbstractOTS):
         self.__key_count = self.__msg_key_count + self.__cs_key_count
 
         # Hashing algorithm
-        self.__hash_function = hash_function
-        self.__digest_size = digestsize
+        self.__hashfunction = hash_function
+        self.__digestsize = digestsize
 
         # Keys
         self.__privkey = None
@@ -89,9 +89,9 @@ class WOTS(AbstractOTS):
     def __repr__(self) -> str:
         repr = "winternitz.signatures.WOTS(w={}, hash_function={}, " + \
                "digestsize={}, "
-        repr = repr.format(self.w, str(self.hashfunction.__module__) +
-                           "." + str(self.hashfunction.__qualname__),
-                           self.digestsize)
+        repr = repr.format(self.__w, str(self.__hashfunction.__module__) +
+                           "." + str(self.__hashfunction.__qualname__),
+                           self.__digestsize)
 
         if self.__privkey is None and self.__pubkey is not None:
             return repr + "pubkey=" + str(self.__pubkey) + ")"
@@ -118,12 +118,12 @@ class WOTS(AbstractOTS):
             fstr += "\t[{}] {}\n".format(idx,
                                          hex(int.from_bytes(key, "big")))
 
-        return fstr.format(self.w, self.hashfunction.__qualname__,
+        return fstr.format(self.__w, self.hashfunction.__qualname__,
                            self.digestsize)
 
     def __eq__(self, obj: Any) -> bool:
-        return isinstance(obj, self.__class__) and self.w == obj.w and \
-            self.hashfunction == obj.hashfunction and self.digestsize == \
+        return isinstance(obj, self.__class__) and self.__w == obj.w and \
+            self.__hashfunction == obj.hashfunction and self.__digestsize == \
             obj.digestsize and self.privkey == obj.privkey and \
             self.pubkey == obj.pubkey
 
@@ -155,15 +155,15 @@ class WOTS(AbstractOTS):
 
     @property
     def hashfunction(self) -> Any:  # TODO: correct Type
-        return self.__hash_function
+        return self.__hashfunction
 
     @property
     def digestsize(self) -> int:
-        return self.__digest_size
+        return self.__digestsize
 
     def _chain(self, value: bytes, startidx: int, endidx: int) -> bytes:
         for i in range(startidx, endidx):
-            value = self.__hash_function(value)
+            value = self.__hashfunction(value)
 
         return value
 
@@ -172,9 +172,21 @@ class WOTS(AbstractOTS):
         result = 0
 
         for value in values:
-            result += self.w - 1 - value
+            result += self.__w - 1 - value
 
         return result
+
+    def _numberToBase(self, num: int, base: int) -> List[int]:
+        if num == 0:
+            return [0]
+
+        digits = []
+
+        while num:
+            digits.append(int(num % base))
+            num //= base
+
+        return digits[::-1]
 
     def sign(self, message: bytes) -> dict:
         privkey = self.privkey
@@ -183,32 +195,64 @@ class WOTS(AbstractOTS):
             raise ValueError("Unable to sign the message, only a public key "
                              + "was specified")
 
-        msghash = self.hashfunction(message)
-        bits = format(int.from_bytes(msghash, "big"), "b")
-        wl = int(ceil(log2(self.w)))
-        # No padding!
-        bitgroups = [int(bits[i:i + wl], 2)
-                     for i in range(0, len(bits), wl)]
+        msghash = self.__hashfunction(message)
+        msgnum = int.from_bytes(msghash, "big")
+        msg_to_sign = self._numberToBase(msgnum, self.__w)
 
-        if (len(bitgroups) != self.__msg_key_count):
+        if (len(msg_to_sign) > self.__msg_key_count):
             err = "The fingerprint of the message could not be split into the"\
                   + " expected amount of bitgroups. This is most likely "\
                   + "because the digestsize specified does not match to the " \
                   + " real digestsize of the specified hashfunction Excepted:"\
                   + " {} bitgroups\nGot: {} bitgroups"
-            raise IndexError(err.format(self.__msg_key_count, len(bitgroups)))
+            raise IndexError(err.format(self.__msg_key_count,
+                                        len(msg_to_sign)))
 
+        msg_to_sign += [0] * (self.__msg_key_count - len(msg_to_sign))  # pad
+        checksum = self._numberToBase(self._checksum(msg_to_sign), self.__w)
+        checksum += [0] * (self.__cs_key_count - len(checksum))  # pad
+        msg_to_sign.extend(checksum)
         signature = [self._chain(privkey[idx], 0, val)
-                     for idx, val in enumerate(bitgroups)]
+                     for idx, val in enumerate(msg_to_sign)]
 
         # If the pubkey is not set yet, derive it from the signature
         if (self.__pubkey is None):
-            self.__pubkey = [self._chain(signature[idx], bitgroups[val], )
-                             for idx, val in enumerate(bitgroups)]
+            self.__pubkey = [self._chain(signature[idx], val,
+                             self.__w - 1 - val)
+                             for idx, val in enumerate(msg_to_sign)]
+
+        return {
+            "fingerprint": msghash,
+            "signature": signature,
+            "pubkey": self.__pubkey
+        }
 
     def verify(self, message: bytes, signature: List[bytes]) -> bool:
-        # TODO: implement verify algorithm
-        pass
+        if len(signature) != self.__key_count:
+            return False
+
+        msghash = self.__hashfunction(message)
+        msgnum = int.from_bytes(msghash, "big")
+        msg_to_verify = self._numberToBase(msgnum, self.__w)
+
+        if (len(msg_to_verify) > self.__msg_key_count):
+            err = "The fingerprint of the message could not be split into the"\
+                  + " expected amount of bitgroups. This is most likely "\
+                  + "because the digestsize specified does not match to the " \
+                  + " real digestsize of the specified hashfunction Excepted:"\
+                  + " {} bitgroups\nGot: {} bitgroups"
+            raise IndexError(err.format(self.__msg_key_count,
+                                        len(msg_to_verify)))
+
+        msg_to_verify += [0] * (self.__msg_key_count - len(msg_to_verify))
+        checksum = self._numberToBase(self._checksum(msg_to_verify), self.__w)
+        checksum += [0] * (self.__cs_key_count - len(checksum))  # pad
+        msg_to_verify.extend(checksum)
+        pubkey = [self._chain(signature[idx], val, self.__w - 1 - val)
+                  for idx, val in enumerate(msg_to_verify)]
+        # TODO: move duplicate code from sign and verify into function
+        # TODO: Pubkey derived from priv key != pubkey derived from signature
+        return True if pubkey == self.pubkey else False
 
 
 # Paper descirbing WOTS+: https://eprint.iacr.org/2017/965.pdf

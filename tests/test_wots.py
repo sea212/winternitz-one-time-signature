@@ -51,4 +51,6 @@ class TestWOTS(object):
         assert not (wotsp != wotsp_copy)
 
     def test_sign_and_verify(self):
-        pass
+        # Do it better!
+        global wots
+        sig = wots.sign("Hello World!".encode("utf-8"))  # noqa: F841
