@@ -83,10 +83,6 @@ information on PyScaffold see `https://pyscaffold.org/`_.
 
 .. _`https://pyscaffold.org/`: https://pyscaffold.org/
 
-.. image:: https://readthedocs.org/projects/winternitz-one-time-signature/badge/?version=latest
-:target: https://winternitz-one-time-signature.readthedocs.io/en/latest/?badge=latest
-:alt: Documentation Status
-
 .. |Build Status| image:: https://www.travis-ci.com/sea212/winternitz-one-time-signature.svg?branch=master
    :target: https://www.travis-ci.com/sea212/winternitz-one-time-signature
 .. |Coverage Status| image:: https://coveralls.io/repos/github/sea212/winternitz-one-time-signature/badge.svg?branch=master

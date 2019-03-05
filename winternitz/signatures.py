@@ -47,10 +47,10 @@ class WOTS(AbstractOTS):
                  privkey: Optional[List[bytes]] = None,
                  pubkey: Optional[List[bytes]] = None) -> None:
 
-        if not (2 <= w <= digestsize):
-            raise ValueError("Rule broken: 2 <= w <= digestsize")
-
         self.__w = w
+
+        if not (2 <= w <= (1 << digestsize)):
+            raise ValueError("Rule broken: 2 <= w <= 2^digestsize")
 
         # Calculate number of message keys, checksum keys and total keys
         self.__msg_key_count = int(ceil(digestsize / log2(w)))
@@ -218,7 +218,7 @@ class WOTS(AbstractOTS):
         # If the pubkey is not set yet, derive it from the signature
         if (self.__pubkey is None):
             self.__pubkey = [self._chain(signature[idx], val,
-                             self.__w - 1 - val)
+                             self.__w - 1)
                              for idx, val in enumerate(msg_to_sign)]
 
         return {
@@ -248,7 +248,7 @@ class WOTS(AbstractOTS):
         checksum = self._numberToBase(self._checksum(msg_to_verify), self.__w)
         checksum += [0] * (self.__cs_key_count - len(checksum))  # pad
         msg_to_verify.extend(checksum)
-        pubkey = [self._chain(signature[idx], val, self.__w - 1 - val)
+        pubkey = [self._chain(signature[idx], val, self.__w - 1)
                   for idx, val in enumerate(msg_to_verify)]
         # TODO: move duplicate code from sign and verify into function
         # TODO: Pubkey derived from priv key != pubkey derived from signature

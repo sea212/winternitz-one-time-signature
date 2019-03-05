@@ -12,6 +12,8 @@ __license__ = "mit"
 
 wots = None
 wots2 = None
+wots_strange_w = None
+wots_strange_w2 = None
 wotsp = None
 wotsp2 = None
 
@@ -21,7 +23,9 @@ wotsp2 = None
 class TestWOTS(object):
     def test_init(self):
         # Init for __function__ and getter tests
-        global wots, wots2, wotsp, wotsp2
+        global wots, wots2, wots_strange_w, wots_strange_w2, wotsp, wotsp2
+        wots_strange_w = winternitz.signatures.WOTS(13)
+        wots_strange_w2 = winternitz.signatures.WOTS(2**17 + 1917)
         wots = winternitz.signatures.WOTS(4)
         wots2 = winternitz.signatures.WOTS(16)
         wotsp = winternitz.signatures.WOTSPLUS(4)
@@ -52,5 +56,15 @@ class TestWOTS(object):
 
     def test_sign_and_verify(self):
         # Do it better!
-        global wots
-        sig = wots.sign("Hello World!".encode("utf-8"))  # noqa: F841
+        global wots, wots_strange_w
+        message = "Hello World!".encode("utf-8")
+
+        # Sign and verify with the same object
+        sig = wots.sign(message)  # noqa: F841
+        assert(wots.verify(message, sig["signature"]))
+
+        # Sign with one object, derive the public key from checksum
+        sig = wots_strange_w.sign(message)
+        # Copy the object, the public key is derive from private key
+        wots_strange_w_copy = eval(repr(wots_strange_w))
+        assert(wots_strange_w_copy.verify(message, sig["signature"]))
