@@ -288,3 +288,6 @@ intersphinx_mapping = {
     'pandas': ('http://pandas.pydata.org/pandas-docs/stable', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
 }
+
+# -- Napoleon configuration -------------------------------------------------------
+napoleon_include_init_with_doc = True

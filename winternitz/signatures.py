@@ -20,32 +20,106 @@ def hmac_openssl_sha256(key: bytes, message: bytes) -> bytes:
 
 # Abstract definition of OTS class
 class AbstractOTS(object, metaclass=ABCMeta):
+    """ OTS base class
+
+    Every class implementing OTS schemes in this package should implement the
+    functions defined in this base class
+    """
     @abstractmethod
     def sign(message: bytes) -> dict:
+        """ Sign a message
+
+        This function will create a valid signature for a message on success
+
+        Args:
+            message: Encoded message to sign
+
+        Returns:
+            Signature
+        """
         raise NotImplementedError("sign is essential for WOTS signatures")
 
     @abstractmethod
     def verify(message: bytes, signature: List[bytes]) -> bool:
+        """ Verify a message
+
+        Verify whether a signature is valid for a message
+
+        Args:
+            message:    Encoded message to verify
+            signature:  Signature that will be used to verify the message
+
+        Returns:
+            Whether the verification succeded
+        """
         raise NotImplementedError("verify is essential for WOTS signatures")
 
     @abstractmethod
     def __eq__(self, obj: Any) -> bool:
+        """ Object equality check
+
+        Compare the relevant data within the called object and obj
+
+        Args:
+            obj: The object to compare the called object with
+
+        Returns:
+            Whether the the calling object and obj are equal
+        """
         raise NotImplementedError("Equality checks are required")
 
     @abstractmethod
     def __ne__(self, obj: Any) -> bool:
+        """ Object non-equality check
+
+        Compare the relevant data within the called object and obj
+
+        Args:
+            obj: The object to compare the called object with
+
+        Returns:
+            Whether the the calling object and obj are not equal
+        """
         raise NotImplementedError("Non-equality checks are required")
 
 
 # Paper describing WOTS: https://eprint.iacr.org/2011/191.pdf
 # "On the Security of the Winternitz One-Time Signature Scheme"
 class WOTS(AbstractOTS):
+    """ Winternitz One-Time-Signature
+
+    Fully configurable class in regards to Winternitz paramter, hash function,
+    private key and public key
+    """
     def __init__(self,
                  w: int,
                  hash_function: Any = openssl_sha256,  # TODO: correct Type
                  digestsize: int = 256,
                  privkey: Optional[List[bytes]] = None,
                  pubkey: Optional[List[bytes]] = None) -> None:
+        """ Initialize WOTS object
+
+        Define under which circumstances a message should be signed or verified
+
+        Args:
+            w:              The Winternitz parameter. A higher value reduces
+                            the space complexity, but increases the time
+                            complexity. It must be greater than 1 but less than
+                            :math: 2^{digestsize}. To get the best space to
+                            time complexity ratio, choose a value that is a
+                            power of two.
+            hash_function:  The hashfunction which will be used to derive
+                            signatures and public keys. Specify a function
+                            which takes bytes as an argument and returns
+                            bytes that represent the hash.
+            digestsize:     The number of bits that will be emitted by the
+                            specified hash function.
+            privkey:        The private key to be used for signing operations.
+                            Leave None if it should be generated
+
+        Returns:
+            Whether the the calling object and obj are not equal
+        """
 
         self.__w = w
 
@@ -134,8 +208,8 @@ class WOTS(AbstractOTS):
     def privkey(self) -> List[bytes]:
         if self.__privkey is None:
             if self.__pubkey is None:
-                self.__privkey = [urandom(32) for pk
-                                  in range(self.__key_count)]
+                self.__privkey = [urandom(int(ceil(self.__digestsize / 8)))
+                                  for pk in range(self.__key_count)]
             else:
                 return []
 
@@ -188,14 +262,7 @@ class WOTS(AbstractOTS):
 
         return digits[::-1]
 
-    def sign(self, message: bytes) -> dict:
-        privkey = self.privkey
-
-        if privkey is None:
-            raise ValueError("Unable to sign the message, only a public key "
-                             + "was specified")
-
-        msghash = self.__hashfunction(message)
+    def _getSignatureBaseMessage(self, msghash: bytes) -> List[bytes]:
         msgnum = int.from_bytes(msghash, "big")
         msg_to_sign = self._numberToBase(msgnum, self.__w)
 
@@ -211,7 +278,17 @@ class WOTS(AbstractOTS):
         msg_to_sign += [0] * (self.__msg_key_count - len(msg_to_sign))  # pad
         checksum = self._numberToBase(self._checksum(msg_to_sign), self.__w)
         checksum += [0] * (self.__cs_key_count - len(checksum))  # pad
-        msg_to_sign.extend(checksum)
+        return msg_to_sign + checksum
+
+    def sign(self, message: bytes) -> dict:
+        privkey = self.privkey
+
+        if privkey is None:
+            raise ValueError("Unable to sign the message, only a public key "
+                             + "was specified")
+
+        msghash = self.__hashfunction(message)
+        msg_to_sign = self._getSignatureBaseMessage(msghash)
         signature = [self._chain(privkey[idx], 0, val)
                      for idx, val in enumerate(msg_to_sign)]
 
@@ -232,31 +309,14 @@ class WOTS(AbstractOTS):
             return False
 
         msghash = self.__hashfunction(message)
-        msgnum = int.from_bytes(msghash, "big")
-        msg_to_verify = self._numberToBase(msgnum, self.__w)
-
-        if (len(msg_to_verify) > self.__msg_key_count):
-            err = "The fingerprint of the message could not be split into the"\
-                  + " expected amount of bitgroups. This is most likely "\
-                  + "because the digestsize specified does not match to the " \
-                  + " real digestsize of the specified hashfunction Excepted:"\
-                  + " {} bitgroups\nGot: {} bitgroups"
-            raise IndexError(err.format(self.__msg_key_count,
-                                        len(msg_to_verify)))
-
-        msg_to_verify += [0] * (self.__msg_key_count - len(msg_to_verify))
-        checksum = self._numberToBase(self._checksum(msg_to_verify), self.__w)
-        checksum += [0] * (self.__cs_key_count - len(checksum))  # pad
-        msg_to_verify.extend(checksum)
+        msg_to_verify = self._getSignatureBaseMessage(msghash)
         pubkey = [self._chain(signature[idx], val, self.__w - 1)
                   for idx, val in enumerate(msg_to_verify)]
-        # TODO: move duplicate code from sign and verify into function
-        # TODO: Pubkey derived from priv key != pubkey derived from signature
         return True if pubkey == self.pubkey else False
 
 
 # Paper descirbing WOTS+: https://eprint.iacr.org/2017/965.pdf
-# "W-OTS+ – Shorter Signatures for Hash-BasedSignature Schemes"
+# "W-OTS+ – Shorter Signatures for Hash-Based Signature Schemes"
 class WOTSPLUS(WOTS):
     def __init__(self,
                  w: int,
@@ -316,12 +376,3 @@ class WOTSPLUS(WOTS):
         # TODO:
         pass
     """
-
-    def sign(self, message: bytes) -> dict:
-        # TODO: implement sign algorithm
-        # Check if privkey none, throw exception  if it is
-        pass
-
-    def verify(self, message: bytes, signature: List[bytes]) -> bool:
-        # TODO: implement verify algorithm
-        pass
