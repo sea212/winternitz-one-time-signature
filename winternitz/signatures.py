@@ -11,10 +11,35 @@ __license__ = "mit"
 
 
 def openssl_sha256(message: bytes) -> bytes:
+    """ Hash function for signature and public key generation
+
+    This functions wraps a hashfunction in a way that it takes a byte-sequence
+    as an argument and returns the hash of that byte-sequence
+
+    Args:
+        message: Byte-sequence to be hashed
+
+    Returns:
+        Sha256 hash
+    """
     return sha256(message).digest()
 
 
 def hmac_openssl_sha256(key: bytes, message: bytes) -> bytes:
+    """ Peudo random function for key and bitmask generation
+
+    This functions wraps a pseudo random function in a way that it takes a
+    byte-sequence as an argument and returns a value which can be used for
+    further generation of keys
+
+    Args:
+        message: Byte-sequence to be hashed
+        key:     key to be used
+
+
+    Returns:
+        HMAC-sha256 hash
+    """
     return new_hmac(key=key, msg=message, digestmod=sha256).digest()
 
 
@@ -128,8 +153,6 @@ class WOTS(AbstractOTS):
                             Do not specify it if a private key was specified
                             or if it should be derived. It will be derived
                             when it is required.
-
-            :private-members:
         """
 
         self.__w = w
@@ -227,31 +250,12 @@ class WOTS(AbstractOTS):
                            self.digestsize)
 
     def __eq__(self, obj: Any) -> bool:
-        """ Compare with another object
-
-        Check whether one object is equal to another object
-
-        Args:
-            obj: Another object
-
-        Returns:
-            Equality of both objects
-        """
-
         return isinstance(obj, self.__class__) and self.__w == obj.w and \
             self.__hashfunction == obj.hashfunction and self.__digestsize == \
             obj.digestsize and self.privkey == obj.privkey and \
             self.pubkey == obj.pubkey
 
     def __ne__(self, obj: Any) -> bool:
-        """ Compare with another object
-
-        Check whether one object is not equal to another object
-
-        Returns:
-            A human-readable representation of this object
-        """
-
         return not self.__eq__(obj)
 
     @property
@@ -332,7 +336,7 @@ class WOTS(AbstractOTS):
             endidx:     Desired position in the hash chain
 
         Returns:
-            Returns the hash at the position :endidx: in the hash chain
+            Returns the hash at the position *endidx* in the hash chain
         """
         for i in range(startidx, endidx):
             value = self.__hashfunction(value)
@@ -340,6 +344,19 @@ class WOTS(AbstractOTS):
         return value
 
     def _checksum(self, values: List[int]) -> int:
+        """ Create checksum for a signature
+
+        This helper function is used during the generation and verification
+        of a signature. It calculates a checksum, which is appenede to the
+        signatures. It prevents man-in-the-middle attacks.
+
+        Args:
+            values: List containing the signatures for each bit group
+
+        Returns:
+            Checksum
+        """
+
         # Inverse sum checksum
         result = 0
 
@@ -349,6 +366,19 @@ class WOTS(AbstractOTS):
         return result
 
     def _numberToBase(self, num: int, base: int) -> List[int]:
+        """ Base conversion
+
+        Using this function one can convert any number to another base
+
+        Args:
+            num:    Number to convert
+            base:   base to convert *num* in
+
+        Returns:
+            List containing each digit in base *base* representation. The
+            digits are stored as decimal numbers
+        """
+
         if num == 0:
             return [0]
 
@@ -361,6 +391,17 @@ class WOTS(AbstractOTS):
         return digits[::-1]
 
     def _getSignatureBaseMessage(self, msghash: bytes) -> List[bytes]:
+        """ Get byte-sequences to sign
+
+        This functions creates a list of byte-sequences, which will be
+        converted to a signature or public key by the chaining function
+
+        Args:
+            msghash: Fingerprint of the message which will be signed
+
+        Returns:
+            List containing byte-sequences
+        """
         msgnum = int.from_bytes(msghash, "big")
         msg_to_sign = self._numberToBase(msgnum, self.__w)
 
@@ -459,6 +500,14 @@ class WOTSPLUS(WOTS):
 
     @property
     def seed(self) -> bytes:
+        """ Seed getter
+
+        Get the seed which is used in the pseudo random function to generate
+        keys and bitmasks
+
+        Returns:
+            Seed for pseudo random function
+        """
         if self.__seed is None:
             self.__seed = urandom(int(ceil(self.digestsize / 8)))
 
@@ -466,6 +515,14 @@ class WOTSPLUS(WOTS):
 
     @property
     def prf(self):
+        """ Pseudo random function getter
+
+        Get the pseudo random function. It is used to generate keys and
+        bitmasks
+
+        Returns:
+            Reference to the pseudo random function
+        """
         return self.__prf
 
     """
