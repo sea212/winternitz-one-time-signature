@@ -24,6 +24,8 @@ class AbstractOTS(object, metaclass=ABCMeta):
 
     Every class implementing OTS schemes in this package should implement the
     functions defined in this base class
+
+    :private-members:
     """
     @abstractmethod
     def sign(message: bytes) -> dict:
@@ -37,6 +39,7 @@ class AbstractOTS(object, metaclass=ABCMeta):
         Returns:
             Signature
         """
+
         raise NotImplementedError("sign is essential for WOTS signatures")
 
     @abstractmethod
@@ -52,6 +55,7 @@ class AbstractOTS(object, metaclass=ABCMeta):
         Returns:
             Whether the verification succeded
         """
+
         raise NotImplementedError("verify is essential for WOTS signatures")
 
     @abstractmethod
@@ -66,6 +70,7 @@ class AbstractOTS(object, metaclass=ABCMeta):
         Returns:
             Whether the the calling object and obj are equal
         """
+
         raise NotImplementedError("Equality checks are required")
 
     @abstractmethod
@@ -80,6 +85,7 @@ class AbstractOTS(object, metaclass=ABCMeta):
         Returns:
             Whether the the calling object and obj are not equal
         """
+
         raise NotImplementedError("Non-equality checks are required")
 
 
@@ -91,6 +97,7 @@ class WOTS(AbstractOTS):
     Fully configurable class in regards to Winternitz paramter, hash function,
     private key and public key
     """
+
     def __init__(self,
                  w: int,
                  hash_function: Any = openssl_sha256,  # TODO: correct Type
@@ -115,10 +122,14 @@ class WOTS(AbstractOTS):
             digestsize:     The number of bits that will be emitted by the
                             specified hash function.
             privkey:        The private key to be used for signing operations.
-                            Leave None if it should be generated
+                            Leave None if it should be generated. In this case
+                            it will be generated when it is required
+            pubkey:         The public key to be used for verifying signatures.
+                            Do not specify it if a private key was specified
+                            or if it should be derived. It will be derived
+                            when it is required.
 
-        Returns:
-            Whether the the calling object and obj are not equal
+            :private-members:
         """
 
         self.__w = w
@@ -161,6 +172,17 @@ class WOTS(AbstractOTS):
             self.__pubkey = pubkey.copy()
 
     def __repr__(self) -> str:
+        """ Get representation of the object
+
+        This function returns a string which is a line of code which can be
+        executed, if you have imported this module using the command
+        "import winternitz.signatures". This code can either be manually
+        executed or evaluated and executed with the command eval(...)
+
+        Returns:
+            A line of code which represents this object
+        """
+
         repr = "winternitz.signatures.WOTS(w={}, hash_function={}, " + \
                "digestsize={}, "
         repr = repr.format(self.__w, str(self.__hashfunction.__module__) +
@@ -173,7 +195,16 @@ class WOTS(AbstractOTS):
         return repr + "privkey=" + str(self.privkey) + ")"
 
     def __str__(self) -> str:
-        fstr = "Package: winternitz\nLibrary: signatures\nClass: WOTS\n" + \
+        def __repr__(self) -> str:
+            """ Get human-readable representation of the object
+
+            This function comes handy if you want to have an overview of the
+            internal state of the calling object
+
+            Returns:
+                A human-readable representation of this object
+            """
+        fstr = "Package: winternitz\n: signatures\nClass: WOTS\n" + \
                "Winternitz Parameter: {}\nHash algorithm: {}\n" + \
                "Digest size: {}\n"
 
@@ -196,16 +227,42 @@ class WOTS(AbstractOTS):
                            self.digestsize)
 
     def __eq__(self, obj: Any) -> bool:
+        """ Compare with another object
+
+        Check whether one object is equal to another object
+
+        Args:
+            obj: Another object
+
+        Returns:
+            Equality of both objects
+        """
+
         return isinstance(obj, self.__class__) and self.__w == obj.w and \
             self.__hashfunction == obj.hashfunction and self.__digestsize == \
             obj.digestsize and self.privkey == obj.privkey and \
             self.pubkey == obj.pubkey
 
     def __ne__(self, obj: Any) -> bool:
+        """ Compare with another object
+
+        Check whether one object is not equal to another object
+
+        Returns:
+            A human-readable representation of this object
+        """
+
         return not self.__eq__(obj)
 
     @property
     def privkey(self) -> List[bytes]:
+        """ Private key getter
+
+        Get a copy of the private key
+
+        Returns:
+            Copy of the private key
+        """
         if self.__privkey is None:
             if self.__pubkey is None:
                 self.__privkey = [urandom(int(ceil(self.__digestsize / 8)))
@@ -217,6 +274,13 @@ class WOTS(AbstractOTS):
 
     @property
     def pubkey(self) -> List[bytes]:
+        """ Public key getter
+
+        Get a copy of the public key
+
+        Returns:
+            Copy of the public key
+        """
         if self.__pubkey is None:
             self.__pubkey = [self._chain(privkey, 0, self.__w - 1)
                              for privkey in self.privkey]
@@ -225,17 +289,51 @@ class WOTS(AbstractOTS):
 
     @property
     def w(self) -> int:
+        """ Winternitz parameter getter
+
+        Get the Winternitz parameter
+
+        Returns:
+            Winternitz parameter
+        """
         return self.__w
 
     @property
     def hashfunction(self) -> Any:  # TODO: correct Type
+        """ Hash function getter
+
+        Get a reference to the current hash function
+
+        Returns:
+            Reference to hash function
+        """
         return self.__hashfunction
 
     @property
     def digestsize(self) -> int:
+        """ Digest size getter
+
+        Get the digest size of the hash function
+
+        Returns:
+            Digest size of the hash function
+        """
         return self.__digestsize
 
     def _chain(self, value: bytes, startidx: int, endidx: int) -> bytes:
+        """ Chaining function
+
+        Core function. It derives hash values which could either represent
+        a part of a signature or a part of the public key
+
+        Args:
+            value:      Current hash
+            startidx:   Current position of value in the hash chain
+            endidx:     Desired position in the hash chain
+
+        Returns:
+            Returns the hash at the position :endidx: in the hash chain
+        """
         for i in range(startidx, endidx):
             value = self.__hashfunction(value)
 
