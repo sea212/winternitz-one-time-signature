@@ -2,7 +2,7 @@
 [run]
 branch = True
 source = winternitz
-# omit = bad_file.py
+omit = *__init__*
 
 [paths]
 source =

@@ -7,11 +7,12 @@
 #
 # All configuration values have a default; values that are commented out
 # serve to show the default.
+# flake8: noqa
 
-import os
-import sys
 import inspect
+import os
 import shutil
+import sys
 
 __location__ = os.path.join(os.getcwd(), os.path.dirname(
     inspect.getfile(inspect.currentframe())))
@@ -80,10 +81,10 @@ def setup(app):
         'enable_eval_rst': True,
         'enable_auto_doc_ref': True,
         'enable_math': True,
-        'enable_inline_math': True
+        'enable_inline_math': True,
     }, True)
     app.add_transform(AutoStructify)
-    
+
 # Additional parsers besides rst
 source_parsers = {
    '.md': 'recommonmark.parser.CommonMarkParser',
@@ -153,7 +154,7 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'alabaster'
+html_theme = 'sphinx_rtd_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -287,4 +288,14 @@ intersphinx_mapping = {
     'sklearn': ('http://scikit-learn.org/stable', None),
     'pandas': ('http://pandas.pydata.org/pandas-docs/stable', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
+}
+
+# -- Napoleon configuration -------------------------------------------------------
+napoleon_include_init_with_doc = True
+
+autodoc_default_options = {
+    'members': None,  # all
+    'private-members': None,  # all
+    'special-members': '__repr__',
+    'exclude-members': '_abc_impl'
 }
