@@ -133,6 +133,10 @@ class WOTS(AbstractOTS):
     private key and public key
     """
 
+    slots = ["__weakref__", "__w", "__hashfunction", "__digestsize",
+             "__privkey", "__pubkey", "__msg_key_count", "__cs_key_count",
+             "__key_count"]
+
     def __init__(self,
                  w: int = 16,
                  hash_function: Callable = openssl_sha256,
@@ -274,7 +278,7 @@ class WOTS(AbstractOTS):
                 self.__privkey = [urandom(random_bytes)
                                   for pk in range(self.__key_count)]
             else:
-                return []
+                return None
 
         # return a copy
         return [*self.__privkey]
@@ -463,6 +467,11 @@ class WOTS(AbstractOTS):
 # Paper descirbing WOTS+: https://eprint.iacr.org/2017/965.pdf
 # "W-OTS+ – Shorter Signatures for Hash-Based Signature Schemes"
 class WOTSPLUS(WOTS):
+
+    slots = ["__weakref__", "__w", "__hashfunction", "__digestsize",
+             "__privkey", "__pubkey", "__msg_key_count", "__cs_key_count",
+             "__key_count", "__seed", "__prf"]
+
     def __init__(self,
                  w: int = 16,
                  hash_function: Callable = openssl_sha256,

@@ -25,7 +25,7 @@ class TestWOTS(object):
         # Init for __function__ and getter tests
         global wots, wots2, wots_strange_w, wots_strange_w2, wotsp, wotsp2
         wots_strange_w = winternitz.signatures.WOTS(w=13)
-        wots_strange_w2 = winternitz.signatures.WOTS(w=((1 << 17) + 1917))
+        wots_strange_w2 = winternitz.signatures.WOTS(w=((1 << 13) + 1917))
         wots = winternitz.signatures.WOTS(w=4)
         wots2 = winternitz.signatures.WOTS(w=16)
         wotsp = winternitz.signatures.WOTSPLUS(w=4)
@@ -56,7 +56,7 @@ class TestWOTS(object):
 
     def test_sign_and_verify(self):
         # Do it better!
-        global wots, wots_strange_w
+        global wots, wots2, wots_strange_w, wots_strange_w2
         message = "Hello World!".encode("utf-8")
 
         # Sign and verify with the same object
@@ -74,3 +74,16 @@ class TestWOTS(object):
                                        .WOTS(w=wots_strange_w.w,
                                              pubkey=wots_strange_w.pubkey)
         assert(wots_strange_w_pub.verify(message, sig["signature"]))
+
+        # It should not be possible to sign having only a private key
+        with pytest.raises(ValueError):
+            _ = wots_strange_w_pub.sign(message)  # noqa: F841
+
+        # Verification should fail with an invalid public key
+        assert(not wots2.verify(message, sig["signature"]))
+        wots_same_w = winternitz.signatures.WOTS(w=4)
+        assert(not wots_same_w.verify(message, sig["signature"]))
+
+        # Sign and verify with the same object using a big and strange w value
+        sig = wots_strange_w2.sign(message)  # noqa: F841
+        assert(wots_strange_w2.verify(message, sig["signature"]))
