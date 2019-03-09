@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from os import urandom
+
 import pytest
 
 import winternitz.signatures
@@ -16,6 +18,8 @@ wots_strange_w = None
 wots_strange_w2 = None
 wotsp = None
 wotsp2 = None
+wotsp_strange_w = None
+wotsp_strange_w2 = None
 
 
 # self is of no use since pytest creates new instances for each test function
@@ -23,13 +27,36 @@ wotsp2 = None
 class TestWOTS(object):
     def test_init(self):
         # Init for __function__ and getter tests
-        global wots, wots2, wots_strange_w, wots_strange_w2, wotsp, wotsp2
+        global wots, wots2, wots_strange_w, wots_strange_w2, wotsp, wotsp2,\
+               wotsp_strange_w, wotsp_strange_w2
         wots_strange_w = winternitz.signatures.WOTS(w=13)
         wots_strange_w2 = winternitz.signatures.WOTS(w=((1 << 13) + 1917))
         wots = winternitz.signatures.WOTS(w=4)
         wots2 = winternitz.signatures.WOTS(w=16)
         wotsp = winternitz.signatures.WOTSPLUS(w=4)
         wotsp2 = winternitz.signatures.WOTSPLUS(w=16)
+        wotsp_strange_w = winternitz.signatures.WOTS(w=13)
+        wotsp_strange_w2 = winternitz.signatures.WOTS(w=((1 << 13) + 1917))
+
+        # Invalid w parameter
+        with pytest.raises(ValueError):
+            _ = winternitz.signatures.WOTS(w=1)  # noqa
+
+        with pytest.raises(ValueError):
+            _ = winternitz.signatures.WOTS(w=(1 << 257))  # noqa
+
+        # Invalid private key size
+        with pytest.raises(ValueError):
+            _ = winternitz.signatures.WOTS(privkey=[b"Hi"])  # noqa
+
+        # Invalid public key size
+        with pytest.raises(ValueError):
+            _ = winternitz.signatures.WOTS(pubkey=[b"Hi"])  # noqa
+
+        # Invalid size of one element of public key
+        with pytest.raises(ValueError):
+            _ = winternitz.signatures.WOTS(pubkey=[urandom(1) for _  # noqa
+                                                   in range(67)])
 
     def test_underscore_functions_and_getter(self):
         global wots, wots2, wotsp, wotsp2
@@ -54,9 +81,17 @@ class TestWOTS(object):
         assert not (wots != wots_copy)
         assert not (wotsp != wotsp_copy)
 
-    def test_sign_and_verify(self):
+        # Number to base returns [0]
+        _ = wots._numberToBase(0, 16)  # noqa
+
+        # Number conversion to another base does return more numbers than
+        # private keys
+        with pytest.raises(IndexError):
+            wots._getSignatureBaseMessage(urandom(40))
+
+    def test_sign_and_verify_wots(self):
         # Do it better!
-        global wots, wots2, wots_strange_w, wots_strange_w2
+        global wots, wots_strange_w, wots_strange_w2
         message = "Hello World!".encode("utf-8")
 
         # Sign and verify with the same object
@@ -77,7 +112,7 @@ class TestWOTS(object):
 
         # It should not be possible to sign having only a private key
         with pytest.raises(ValueError):
-            _ = wots_strange_w_pub.sign(message)  # noqa: F841
+            _ = wots_strange_w_pub.sign(message)  # noqa
 
         # Verification should fail with an invalid public key
         assert(not wots2.verify(message, sig["signature"]))

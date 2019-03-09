@@ -407,8 +407,9 @@ class WOTS(AbstractOTS):
             msghash: Fingerprint of the message which will be signed
 
         Returns:
-            List containing byte-sequences
+            Blocks of the message hash which each will be signed
         """
+
         msgnum = int.from_bytes(msghash, "big")
         msg_to_sign = self._numberToBase(msgnum, self.__w)
 
