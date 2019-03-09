@@ -3,7 +3,7 @@ from hashlib import sha256
 from hmac import new as new_hmac
 from math import ceil, floor, log2
 from os import urandom
-from typing import Any, List, Optional
+from typing import Any, Callable, List, Optional
 
 __author__ = "Harald Heckmann"
 __copyright__ = "Harald Heckmann"
@@ -30,7 +30,7 @@ def hmac_openssl_sha256(key: bytes, message: bytes) -> bytes:
 
     This functions wraps a pseudo random function in a way that it takes a
     byte-sequence as an argument and returns a value which can be used for
-    further generation of keys
+    further generation of keys.
 
     Args:
         message: Byte-sequence to be hashed
@@ -49,8 +49,6 @@ class AbstractOTS(object, metaclass=ABCMeta):
 
     Every class implementing OTS schemes in this package should implement the
     functions defined in this base class
-
-    :private-members:
     """
     @abstractmethod
     def sign(message: bytes) -> dict:
@@ -62,7 +60,16 @@ class AbstractOTS(object, metaclass=ABCMeta):
             message: Encoded message to sign
 
         Returns:
-            Signature
+            A dictionary containing the fingerprint of the message, which was
+            created using the hash function that was specified during
+            initialization of this object, the signature and a public key
+            to verify the signature. Structure::
+
+                {
+                    "fingerprint": message hash (Type: bytes),
+                    "signature": signature (Type: List[bytes]),
+                    "pubkey": public key (Type: List[bytes])
+                }
         """
 
         raise NotImplementedError("sign is essential for WOTS signatures")
@@ -125,21 +132,21 @@ class WOTS(AbstractOTS):
 
     def __init__(self,
                  w: int,
-                 hash_function: Any = openssl_sha256,  # TODO: correct Type
+                 hash_function: Callable = openssl_sha256,
                  digestsize: int = 256,
                  privkey: Optional[List[bytes]] = None,
                  pubkey: Optional[List[bytes]] = None) -> None:
         """ Initialize WOTS object
 
-        Define under which circumstances a message should be signed or verified
+        Define the parameters required to sign and verify a message
 
         Args:
             w:              The Winternitz parameter. A higher value reduces
                             the space complexity, but increases the time
-                            complexity. It must be greater than 1 but less than
-                            :math: 2^{digestsize}. To get the best space to
-                            time complexity ratio, choose a value that is a
-                            power of two.
+                            complexity. It must be greater than 1 but less or
+                            equal than :math:`2^{digestsize}`. To get the best
+                            space to time complexity ratio, choose a value that
+                            is a power of two.
             hash_function:  The hashfunction which will be used to derive
                             signatures and public keys. Specify a function
                             which takes bytes as an argument and returns
@@ -148,7 +155,7 @@ class WOTS(AbstractOTS):
                             specified hash function.
             privkey:        The private key to be used for signing operations.
                             Leave None if it should be generated. In this case
-                            it will be generated when it is required
+                            it will be generated when it is required.
             pubkey:         The public key to be used for verifying signatures.
                             Do not specify it if a private key was specified
                             or if it should be derived. It will be derived
@@ -200,7 +207,7 @@ class WOTS(AbstractOTS):
         This function returns a string which is a line of code which can be
         executed, if you have imported this module using the command
         "import winternitz.signatures". This code can either be manually
-        executed or evaluated and executed with the command eval(...)
+        executed or evaluated and executed with the command eval(code).
 
         Returns:
             A line of code which represents this object
@@ -221,8 +228,8 @@ class WOTS(AbstractOTS):
         def __repr__(self) -> str:
             """ Get human-readable representation of the object
 
-            This function comes handy if you want to have an overview of the
-            internal state of the calling object
+            This function comes handy if you want to have an human-readable
+            overview of the internal state of the calling object.
 
             Returns:
                 A human-readable representation of this object
@@ -303,7 +310,7 @@ class WOTS(AbstractOTS):
         return self.__w
 
     @property
-    def hashfunction(self) -> Any:  # TODO: correct Type
+    def hashfunction(self) -> Callable:
         """ Hash function getter
 
         Get a reference to the current hash function
@@ -328,11 +335,11 @@ class WOTS(AbstractOTS):
         """ Chaining function
 
         Core function. It derives hash values which could either represent
-        a part of a signature or a part of the public key
+        a part of a signature or a part of the public key.
 
         Args:
             value:      Current hash
-            startidx:   Current position of value in the hash chain
+            startidx:   Current position of **value** in the hash chain
             endidx:     Desired position in the hash chain
 
         Returns:
@@ -376,7 +383,7 @@ class WOTS(AbstractOTS):
 
         Returns:
             List containing each digit in base *base* representation. The
-            digits are stored as decimal numbers
+            digits are stored as decimal numbers.
         """
 
         if num == 0:
@@ -394,7 +401,7 @@ class WOTS(AbstractOTS):
         """ Get byte-sequences to sign
 
         This functions creates a list of byte-sequences, which will be
-        converted to a signature or public key by the chaining function
+        converted to a signature or public key by the chaining function.
 
         Args:
             msghash: Fingerprint of the message which will be signed
@@ -459,12 +466,41 @@ class WOTS(AbstractOTS):
 class WOTSPLUS(WOTS):
     def __init__(self,
                  w: int,
-                 hash_function: Any = openssl_sha256,  # TODO: correct Type
-                 prf: Any = hmac_openssl_sha256,  # TODO: correct Type
+                 hash_function: Callable = openssl_sha256,
+                 prf: Callable = hmac_openssl_sha256,
                  digestsize: int = 256,
                  seed: Optional[bytes] = None,
                  privkey: Optional[List[bytes]] = None,
                  pubkey: Optional[List[bytes]] = None):
+        """ Initialize WOTS object
+
+        Define under which circumstances a message should be signed or verified
+
+        Args:
+            w:              The Winternitz parameter. A higher value reduces
+                            the space complexity, but increases the time
+                            complexity. It must be greater than 1 but less than
+                            :math: 2^{digestsize}. To get the best space to
+                            time complexity ratio, choose a value that is a
+                            power of two.
+            hash_function:  The hashfunction which will be used to derive
+                            signatures and public keys. Specify a function
+                            which takes bytes as an argument and returns
+                            bytes that represent the hash.
+            digestsize:     The number of bits that will be emitted by the
+                            specified hash function.
+            privkey:        The private key to be used for signing operations.
+                            Leave None if it should be generated. In this case
+                            it will be generated when it is required.
+            pubkey:         The public key to be used for verifying signatures.
+                            Do not specify it if a private key was specified
+                            or if it should be derived. It will be derived
+                            when it is required.
+            seed:           Seed which is used in the pseudo random function to
+                            generate keys and bitmasks.
+            prf:            Pseudo random function which is used to generate
+                            keys and bitmasks.
+        """
 
         super().__init__(w, hash_function=hash_function,
                          digestsize=digestsize, privkey=privkey,
@@ -503,7 +539,7 @@ class WOTSPLUS(WOTS):
         """ Seed getter
 
         Get the seed which is used in the pseudo random function to generate
-        keys and bitmasks
+        keys and bitmasks.
 
         Returns:
             Seed for pseudo random function
@@ -514,11 +550,11 @@ class WOTSPLUS(WOTS):
         return self.__seed
 
     @property
-    def prf(self):
+    def prf(self) -> Callable:
         """ Pseudo random function getter
 
         Get the pseudo random function. It is used to generate keys and
-        bitmasks
+        bitmasks.
 
         Returns:
             Reference to the pseudo random function

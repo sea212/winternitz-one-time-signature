@@ -25,7 +25,7 @@ class TestWOTS(object):
         # Init for __function__ and getter tests
         global wots, wots2, wots_strange_w, wots_strange_w2, wotsp, wotsp2
         wots_strange_w = winternitz.signatures.WOTS(13)
-        wots_strange_w2 = winternitz.signatures.WOTS(2**17 + 1917)
+        wots_strange_w2 = winternitz.signatures.WOTS((1 << 17) + 1917)
         wots = winternitz.signatures.WOTS(4)
         wots2 = winternitz.signatures.WOTS(16)
         wotsp = winternitz.signatures.WOTSPLUS(4)
@@ -65,6 +65,6 @@ class TestWOTS(object):
 
         # Sign with one object, derive the public key from checksum
         sig = wots_strange_w.sign(message)
-        # Copy the object, the public key is derive from private key
+        # Copy the object, the public key is derived from the private key
         wots_strange_w_copy = eval(repr(wots_strange_w))
         assert(wots_strange_w_copy.verify(message, sig["signature"]))

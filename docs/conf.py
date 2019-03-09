@@ -80,7 +80,7 @@ def setup(app):
         'enable_eval_rst': True,
         'enable_auto_doc_ref': True,
         'enable_math': True,
-        'enable_inline_math': True
+        'enable_inline_math': True,
     }, True)
     app.add_transform(AutoStructify)
 
@@ -291,3 +291,10 @@ intersphinx_mapping = {
 
 # -- Napoleon configuration -------------------------------------------------------
 napoleon_include_init_with_doc = True
+
+autodoc_default_options = {
+    'members': None,  # all
+    'private-members': None,  # all
+    'special-members': '__repr__',
+    'exclude-members': '_abc_impl'
+}
