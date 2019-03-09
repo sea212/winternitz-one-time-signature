@@ -25,7 +25,7 @@ def openssl_sha256(message: bytes) -> bytes:
     return sha256(message).digest()
 
 
-def hmac_openssl_sha256(key: bytes, message: bytes) -> bytes:
+def hmac_openssl_sha256(message: bytes, key: bytes) -> bytes:
     """ Peudo random function for key and bitmask generation
 
     This functions wraps a pseudo random function in a way that it takes a
@@ -66,9 +66,12 @@ class AbstractOTS(object, metaclass=ABCMeta):
             to verify the signature. Structure::
 
                 {
-                    "fingerprint": message hash (Type: bytes),
-                    "signature": signature (Type: List[bytes]),
-                    "pubkey": public key (Type: List[bytes])
+                    "w":            winternitz parameter (Type: int),
+                    "fingerprint":  message hash (Type: bytes),
+                    "hashalgo":     hash algorithm (Type: str),
+                    "digestsize":   hash byte count (Type: int),
+                    "pubkey":       public key (Type: List[bytes]),
+                    "signature":    signature (Type: List[bytes])
                 }
         """
 
@@ -131,7 +134,7 @@ class WOTS(AbstractOTS):
     """
 
     def __init__(self,
-                 w: int,
+                 w: int = 16,
                  hash_function: Callable = openssl_sha256,
                  digestsize: int = 256,
                  privkey: Optional[List[bytes]] = None,
@@ -185,19 +188,19 @@ class WOTS(AbstractOTS):
         # set privkey
         if privkey is not None:
             if len(privkey) != self.__key_count:
-                raise ValueError("Provided private key length does not match to\
-                                  provided winternitz parameter")
+                raise ValueError("Provided private key length does not match "
+                                 + "with the provided winternitz parameter")
 
             self.__privkey = privkey.copy()
         # set pubkey, but only is privkey is not set
         elif pubkey is not None:
-            if len(pubkey) != self.__cs_key_count:
-                raise ValueError("Provided public key length does not match to\
-                                  provided winternitz parameter")
+            if len(pubkey) != self.__key_count:
+                raise ValueError("Provided public key length does not match "
+                                 + "with the provided winternitz parameter")
 
             for elem in filter(lambda t: len(t) != hash_bytes, pubkey):
-                raise ValueError("Length of public key hashes does not match\
-                                  with the provided digestsize")
+                raise ValueError("Length of public key hashes does not match "
+                                 + "with the provided digestsize")
 
             self.__pubkey = pubkey.copy()
 
@@ -225,15 +228,6 @@ class WOTS(AbstractOTS):
         return repr + "privkey=" + str(self.privkey) + ")"
 
     def __str__(self) -> str:
-        def __repr__(self) -> str:
-            """ Get human-readable representation of the object
-
-            This function comes handy if you want to have an human-readable
-            overview of the internal state of the calling object.
-
-            Returns:
-                A human-readable representation of this object
-            """
         fstr = "Package: winternitz\n: signatures\nClass: WOTS\n" + \
                "Winternitz Parameter: {}\nHash algorithm: {}\n" + \
                "Digest size: {}\n"
@@ -276,12 +270,14 @@ class WOTS(AbstractOTS):
         """
         if self.__privkey is None:
             if self.__pubkey is None:
-                self.__privkey = [urandom(int(ceil(self.__digestsize / 8)))
+                random_bytes = int(ceil(self.__digestsize / 8))
+                self.__privkey = [urandom(random_bytes)
                                   for pk in range(self.__key_count)]
             else:
                 return []
 
-        return self.__privkey.copy()
+        # return a copy
+        return [*self.__privkey]
 
     @property
     def pubkey(self) -> List[bytes]:
@@ -296,7 +292,7 @@ class WOTS(AbstractOTS):
             self.__pubkey = [self._chain(privkey, 0, self.__w - 1)
                              for privkey in self.privkey]
 
-        return self.__pubkey.copy()
+        return [*self.__pubkey]
 
     @property
     def w(self) -> int:
@@ -447,7 +443,10 @@ class WOTS(AbstractOTS):
         return {
             "fingerprint": msghash,
             "signature": signature,
-            "pubkey": self.__pubkey
+            "pubkey": [*self.__pubkey],
+            "w": self.__w,
+            "hashalgo": self.__hashfunction.__qualname__,
+            "digestsize": self.__digestsize
         }
 
     def verify(self, message: bytes, signature: List[bytes]) -> bool:
@@ -465,7 +464,7 @@ class WOTS(AbstractOTS):
 # "W-OTS+ – Shorter Signatures for Hash-Based Signature Schemes"
 class WOTSPLUS(WOTS):
     def __init__(self,
-                 w: int,
+                 w: int = 16,
                  hash_function: Callable = openssl_sha256,
                  prf: Callable = hmac_openssl_sha256,
                  digestsize: int = 256,
@@ -497,12 +496,12 @@ class WOTSPLUS(WOTS):
                             or if it should be derived. It will be derived
                             when it is required.
             seed:           Seed which is used in the pseudo random function to
-                            generate keys and bitmasks.
+                            generate bitmasks.
             prf:            Pseudo random function which is used to generate
-                            keys and bitmasks.
+                            the bitmasks.
         """
 
-        super().__init__(w, hash_function=hash_function,
+        super().__init__(w=w, hash_function=hash_function,
                          digestsize=digestsize, privkey=privkey,
                          pubkey=pubkey)
 
@@ -539,7 +538,7 @@ class WOTSPLUS(WOTS):
         """ Seed getter
 
         Get the seed which is used in the pseudo random function to generate
-        keys and bitmasks.
+        the bitmasks.
 
         Returns:
             Seed for pseudo random function
@@ -553,17 +552,70 @@ class WOTSPLUS(WOTS):
     def prf(self) -> Callable:
         """ Pseudo random function getter
 
-        Get the pseudo random function. It is used to generate keys and
-        bitmasks.
+        Get the pseudo random function. It is used to generate the bitmasks.
 
         Returns:
             Reference to the pseudo random function
         """
         return self.__prf
 
-    """
-    # https://tools.ietf.org/html/rfc8391#section-3.1.2
-    def _chain(self) -> None:
-        # TODO:
-        pass
-    """
+    def _chain(self, value: bytes, startidx: int, endidx: int) -> bytes:
+        """ Chaining function
+
+        Core function. It derives hash values which could either represent
+        a part of a signature or a part of the public key.
+
+        Args:
+            value:      Current hash
+            startidx:   Current position of **value** in the hash chain
+            endidx:     Desired position in the hash chain
+
+        Returns:
+            Returns the hash at the position *endidx* in the hash chain
+        """
+
+        # Generate seed if it is not set yet
+        _ = self.seed  # noqa: F841
+        digestsize_bytes = int(ceil(self.digestsize / 8))
+
+        for i in range(startidx, endidx):
+            bm = self.__prf(message=value, key=self.__seed)
+            tohash_b = (int.from_bytes(value, "big") ^
+                        int.from_bytes(bm, "big"))
+            tohash = tohash_b.to_bytes(digestsize_bytes, "big")
+            value = self.hashfunction(tohash)
+
+        return value
+
+    def sign(self, message: bytes) -> dict:
+        """ Sign a message
+
+        This function will create a valid signature for a message on success
+
+        Args:
+            message: Encoded message to sign
+
+        Returns:
+            A dictionary containing the fingerprint of the message, which was
+            created using the hash function that was specified during
+            initialization of this object, the signature and a public key
+            to verify the signature. Structure::
+
+                {
+                    "w":            winternitz parameter (Type: int),
+                    "fingerprint":  message hash (Type: bytes),
+                    "hashalgo":     hash algorithm (Type: str),
+                    "digestsize":   hash byte count (Type: int),
+                    "pubkey":       public key (Type: List[bytes]),
+                    "prf":          pseudo random function (Type: str),
+                    "seed":         Seed used in prf (Type: bytes),
+                    "signature":    signature (Type: List[bytes])
+                }
+        """
+        ret = super().sign(message)
+        ret["prf"] = self.__prf.__qualname__
+        ret["seed"] = self.__seed
+        return ret
+
+    def verify(self, message: bytes, signature: List[bytes]) -> bool:
+        return super().verify(message=message, signature=signature)

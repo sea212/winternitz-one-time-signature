@@ -24,12 +24,12 @@ class TestWOTS(object):
     def test_init(self):
         # Init for __function__ and getter tests
         global wots, wots2, wots_strange_w, wots_strange_w2, wotsp, wotsp2
-        wots_strange_w = winternitz.signatures.WOTS(13)
-        wots_strange_w2 = winternitz.signatures.WOTS((1 << 17) + 1917)
-        wots = winternitz.signatures.WOTS(4)
-        wots2 = winternitz.signatures.WOTS(16)
-        wotsp = winternitz.signatures.WOTSPLUS(4)
-        wotsp2 = winternitz.signatures.WOTSPLUS(16)
+        wots_strange_w = winternitz.signatures.WOTS(w=13)
+        wots_strange_w2 = winternitz.signatures.WOTS(w=((1 << 17) + 1917))
+        wots = winternitz.signatures.WOTS(w=4)
+        wots2 = winternitz.signatures.WOTS(w=16)
+        wotsp = winternitz.signatures.WOTSPLUS(w=4)
+        wotsp2 = winternitz.signatures.WOTSPLUS(w=16)
 
     def test_underscore_functions_and_getter(self):
         global wots, wots2, wotsp, wotsp2
@@ -68,3 +68,9 @@ class TestWOTS(object):
         # Copy the object, the public key is derived from the private key
         wots_strange_w_copy = eval(repr(wots_strange_w))
         assert(wots_strange_w_copy.verify(message, sig["signature"]))
+
+        # Create an object and specify only the public key. Verify the sig
+        wots_strange_w_pub = winternitz.signatures\
+                                       .WOTS(w=wots_strange_w.w,
+                                             pubkey=wots_strange_w.pubkey)
+        assert(wots_strange_w_pub.verify(message, sig["signature"]))
