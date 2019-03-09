@@ -448,7 +448,7 @@ class WOTS(AbstractOTS):
         return {
             "fingerprint": msghash,
             "signature": signature,
-            "pubkey": [*self.__pubkey],
+            "pubkey": [self.__pubkey.copy()],
             "w": self.__w,
             "hashalgo": self.__hashfunction.__qualname__,
             "digestsize": self.__digestsize
