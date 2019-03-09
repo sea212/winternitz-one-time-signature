@@ -297,5 +297,5 @@ autodoc_default_options = {
     'members': None,  # all
     'private-members': None,  # all
     'special-members': '__repr__',
-    'exclude-members': '_abc_impl'
+    'exclude-members': '_abc_impl, slots'
 }

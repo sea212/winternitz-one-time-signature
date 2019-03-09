@@ -2,12 +2,15 @@
 Changelog
 =========
 
-Pre Version 0.1
+Pre Version 1.0
 ===============
 
-- Setup Project (structure, travis, tox, coverage, sphinx, git-prehooks)
+- Setup project (structure, travis, tox, coverage, sphinx, git-prehooks)
 
-Version 0.1
+Version 1.0
 ===========
 
-- Not released yet!
+- First fully tested and documented release of the winternitz package.
+- Contains AbstractOTS base class for OTS implementations in this package
+- Contains fully configurable Winternitz One-Time-Signature scheme
+- Contains fully configurable Winternitz One-Time-Signature+ scheme
