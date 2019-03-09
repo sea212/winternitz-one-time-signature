@@ -35,8 +35,8 @@ class TestWOTS(object):
         wots2 = winternitz.signatures.WOTS(w=16)
         wotsp = winternitz.signatures.WOTSPLUS(w=4)
         wotsp2 = winternitz.signatures.WOTSPLUS(w=16)
-        wotsp_strange_w = winternitz.signatures.WOTS(w=13)
-        wotsp_strange_w2 = winternitz.signatures.WOTS(w=((1 << 13) + 1917))
+        wotsp_strange_w = winternitz.signatures.WOTSPLUS(w=13)
+        wotsp_strange_w2 = winternitz.signatures.WOTSPLUS(w=((1 << 13) + 1917))
 
         # Invalid w parameter
         with pytest.raises(ValueError):
@@ -64,6 +64,10 @@ class TestWOTS(object):
         _ = str(wots2)
         _ = str(wotsp2)  # noqa: F841
 
+        # Test string representation if public key is not set
+        _ = str(winternitz.signatures.WOTS(w=16, pubkey=[urandom(32) for
+                                           _ in range(67)]))
+
         # __repr__(self) returns a string which contains the code to be
         # executed to create an equal object. eval(...) does execute this code.
         wots_copy = eval(repr(wots))
@@ -90,8 +94,8 @@ class TestWOTS(object):
             wots._getSignatureBaseMessage(urandom(40))
 
     def test_sign_and_verify_wots(self):
-        # Do it better!
         global wots, wots_strange_w, wots_strange_w2
+        WOTS = winternitz.signatures.WOTS
         message = "Hello World!".encode("utf-8")
 
         # Sign and verify with the same object
@@ -100,14 +104,14 @@ class TestWOTS(object):
 
         # Sign with one object, derive the public key from checksum
         sig = wots_strange_w.sign(message)
+
         # Copy the object, the public key is derived from the private key
         wots_strange_w_copy = eval(repr(wots_strange_w))
         assert(wots_strange_w_copy.verify(message, sig["signature"]))
 
         # Create an object and specify only the public key. Verify the sig
-        wots_strange_w_pub = winternitz.signatures\
-                                       .WOTS(w=wots_strange_w.w,
-                                             pubkey=wots_strange_w.pubkey)
+        wots_strange_w_pub = WOTS(w=wots_strange_w.w,
+                                  pubkey=wots_strange_w.pubkey)
         assert(wots_strange_w_pub.verify(message, sig["signature"]))
 
         # It should not be possible to sign having only a private key
@@ -116,9 +120,44 @@ class TestWOTS(object):
 
         # Verification should fail with an invalid public key
         assert(not wots2.verify(message, sig["signature"]))
-        wots_same_w = winternitz.signatures.WOTS(w=4)
+        wots_same_w = WOTS(w=4)
         assert(not wots_same_w.verify(message, sig["signature"]))
 
         # Sign and verify with the same object using a big and strange w value
         sig = wots_strange_w2.sign(message)  # noqa: F841
         assert(wots_strange_w2.verify(message, sig["signature"]))
+
+    def test_sign_and_verify_wots_plus(self):
+        global wotsp, wotsp2, wotsp_strange_w, wotsp_strange_w2
+        WOTSP = winternitz.signatures.WOTSPLUS
+        message = "Hello World!".encode("utf-8")
+
+        # Sign and verify with the same object
+        sig = wotsp.sign(message)  # noqa: F841
+        assert(wotsp.verify(message, sig["signature"]))
+
+        # Sign with one object, derive the public key from checksum
+        sig = wotsp_strange_w.sign(message)
+        # Copy the object, the public key is derived from the private key
+        wotsp_strange_w_copy = eval(repr(wotsp_strange_w))
+        assert(wotsp_strange_w_copy.verify(message, sig["signature"]))
+
+        # Create an object and specify only the public key. Verify the sig
+        wotsp_strange_w_pub = WOTSP(w=wotsp_strange_w.w, pubkey=wotsp_strange_w
+                                    .pubkey)
+        # Should fail because we need the seed
+        assert(not wotsp_strange_w_pub.verify(message, sig["signature"]))
+
+        wotsp_strange_w_pub = WOTSP(w=wotsp_strange_w.w,
+                                    seed=wotsp_strange_w.seed,
+                                    pubkey=wotsp_strange_w.pubkey)
+        assert(wotsp_strange_w_pub.verify(message, sig["signature"]))
+
+        # It should not be possible to sign having only a private key
+        with pytest.raises(ValueError):
+            _ = wotsp_strange_w_pub.sign(message)  # noqa
+
+        # Verification should fail with an invalid public key
+        assert(not wotsp2.verify(message, sig["signature"]))
+        wotsp_same_w = WOTSP(w=4, seed=wotsp_strange_w.seed)
+        assert(not wotsp_same_w.verify(message, sig["signature"]))

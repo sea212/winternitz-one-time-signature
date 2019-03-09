@@ -281,7 +281,7 @@ class WOTS(AbstractOTS):
                 return None
 
         # return a copy
-        return [*self.__privkey]
+        return self.__privkey.copy()  # note: cannot use [*list] in py < 3.5
 
     @property
     def pubkey(self) -> List[bytes]:
@@ -296,7 +296,7 @@ class WOTS(AbstractOTS):
             self.__pubkey = [self._chain(privkey, 0, self.__w - 1)
                              for privkey in self.privkey]
 
-        return [*self.__pubkey]
+        return self.__pubkey.copy()  # note: cannot use [*list] in py < 3.5
 
     @property
     def w(self) -> int:
@@ -468,10 +468,13 @@ class WOTS(AbstractOTS):
 # Paper descirbing WOTS+: https://eprint.iacr.org/2017/965.pdf
 # "W-OTS+ – Shorter Signatures for Hash-Based Signature Schemes"
 class WOTSPLUS(WOTS):
+    """ Winternitz One-Time-Signature Plus
 
-    slots = ["__weakref__", "__w", "__hashfunction", "__digestsize",
-             "__privkey", "__pubkey", "__msg_key_count", "__cs_key_count",
-             "__key_count", "__seed", "__prf"]
+    Fully configurable class in regards to Winternitz paramter, hash function,
+    pseudo random function, seed, private key and public key
+    """
+
+    slots = ["__weakref__", "__seed", "__prf"]
 
     def __init__(self,
                  w: int = 16,
