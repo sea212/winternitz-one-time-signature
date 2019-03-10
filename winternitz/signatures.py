@@ -154,7 +154,7 @@ class WOTS(AbstractOTS):
 
     def __init__(self,
                  w: int = 16,
-                 hash_function: Callable = openssl_sha512,
+                 hashfunction: Callable = openssl_sha512,
                  digestsize: int = 512,
                  privkey: Optional[List[bytes]] = None,
                  pubkey: Optional[List[bytes]] = None) -> None:
@@ -169,7 +169,7 @@ class WOTS(AbstractOTS):
                             equal than :math:`2^{digestsize}`. To get the best
                             space to time complexity ratio, choose a value that
                             is a power of two.
-            hash_function:  The hashfunction which will be used to derive
+            hashfunction:  The hashfunction which will be used to derive
                             signatures and public keys. Specify a function
                             which takes bytes as an argument and returns
                             bytes that represent the hash.
@@ -196,7 +196,7 @@ class WOTS(AbstractOTS):
         self.__key_count = self.__msg_key_count + self.__cs_key_count
 
         # Hashing algorithm
-        self.__hashfunction = hash_function
+        self.__hashfunction = hashfunction
         self.__digestsize = digestsize
 
         # Keys
@@ -235,7 +235,7 @@ class WOTS(AbstractOTS):
             A line of code which represents this object
         """
 
-        repr = "winternitz.signatures.WOTS(w={}, hash_function={}, " + \
+        repr = "winternitz.signatures.WOTS(w={}, hashfunction={}, " + \
                "digestsize={}, "
         repr = repr.format(self.__w, str(self.__hashfunction.__module__) +
                            "." + str(self.__hashfunction.__qualname__),
@@ -463,7 +463,7 @@ class WOTS(AbstractOTS):
         return {
             "fingerprint": msghash,
             "signature": signature,
-            "pubkey": [self.__pubkey.copy()],
+            "pubkey": self.__pubkey.copy(),
             "w": self.__w,
             "hashalgo": self.__hashfunction.__qualname__,
             "digestsize": self.__digestsize
@@ -493,7 +493,7 @@ class WOTSPLUS(WOTS):
 
     def __init__(self,
                  w: int = 16,
-                 hash_function: Callable = openssl_sha256,
+                 hashfunction: Callable = openssl_sha256,
                  prf: Callable = hmac_openssl_sha256,
                  digestsize: int = 256,
                  seed: Optional[bytes] = None,
@@ -510,7 +510,7 @@ class WOTSPLUS(WOTS):
                             :math: 2^{digestsize}. To get the best space to
                             time complexity ratio, choose a value that is a
                             power of two.
-            hash_function:  The hashfunction which will be used to derive
+            hashfunction:  The hashfunction which will be used to derive
                             signatures and public keys. Specify a function
                             which takes bytes as an argument and returns
                             bytes that represent the hash.
@@ -529,7 +529,7 @@ class WOTSPLUS(WOTS):
                             the bitmasks.
         """
 
-        super().__init__(w=w, hash_function=hash_function,
+        super().__init__(w=w, hashfunction=hashfunction,
                          digestsize=digestsize, privkey=privkey,
                          pubkey=pubkey)
 
