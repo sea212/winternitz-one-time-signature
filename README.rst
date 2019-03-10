@@ -47,14 +47,14 @@ will be signed is split into groups of :math:`ceil(log_2(w))` bits. Each of thes
 Each verification key is derived by hashing the secret key for each group :math:`2^{w-1}` times. All verification
 keys will be published and represent one unified verification key. When signing a message, the
 fingerprint of the message is split into groups of :math:`ceil(log2(w))` bits. To create the signature, the
-private key for each bit group is hashed :math:`bitgroup\_value` times, where :math:`bitgroup\_value` is the value
+private key for each bit group is hashed :math:`bitgroup_value` times, where :math:`bitgroup_value` is the value
 of the bitgroup. Additionally a (inverse sum) checksum is appended, which denies man-in-the-middle
 attacks. The checksum is calculated from the signature, split into bit groups of :math:`ceil(log2(w))` bits, and
 signed. To verify the signature, the fingerprint of the message is first split into bit groups of :math:`ceil(log2(w)`
 bits each. The basic idea is to take the signature of each bit group, calculate the verification key
 from it and finally compare it to the published verification key. Since the signature was hashed
-:math:`bitgroup\_value` times, all you have to do to calculate the verification key from the signature
-is to hash the signature :math:`2^{w-1} - bitgroup\_value - 1` times. Besides verifing the message, the verifier
+:math:`bitgroup_value` times, all you have to do to calculate the verification key from the signature
+is to hash the signature :math:`2^{w-1} - bitgroup_value - 1` times. Besides verifing the message, the verifier
 must also calculate the checksum and verify it.
 
 Setup
