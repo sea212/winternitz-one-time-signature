@@ -86,7 +86,7 @@ Those classes can be used out of the box to sign or verify
 messages
 
 WOTS
-----
+~~~~
 .. code-block:: python
 
     import winternitz.signatures
@@ -142,7 +142,7 @@ With that data, another person can verify the authenticity of your message:
     # Output: Verification success: True
 
 WOTSPLUS
---------
+~~~~~~~~
 .. code-block:: python
 
     import winternitz.signatures
