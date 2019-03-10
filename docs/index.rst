@@ -1,6 +1,6 @@
-====
-winternitz
-====
+==========
+Winternitz
+==========
 
 This is the documentation of **winternitz**.
 
@@ -21,7 +21,10 @@ Contents
    Authors <authors>
    Changelog <changelog>
    Introduction <introduction>
+   Setup <setup>
+   Usage <usage>
    Module Reference <api/modules>
+   Contribution <contribution>
 
 
 Indices and tables

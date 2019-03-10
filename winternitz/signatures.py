@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from hashlib import sha256
+from hashlib import sha256, sha512
 from hmac import new as new_hmac
 from math import ceil, floor, log2
 from os import urandom
@@ -41,6 +41,21 @@ def hmac_openssl_sha256(message: bytes, key: bytes) -> bytes:
         HMAC-sha256 hash
     """
     return new_hmac(key=key, msg=message, digestmod=sha256).digest()
+
+
+def openssl_sha512(message: bytes) -> bytes:
+    """ Hash function for signature and public key generation
+
+    This functions wraps a hashfunction in a way that it takes a byte-sequence
+    as an argument and returns the hash of that byte-sequence
+
+    Args:
+        message: Byte-sequence to be hashed
+
+    Returns:
+        Sha512 hash
+    """
+    return sha512(message).digest()
 
 
 # Abstract definition of OTS class
@@ -139,8 +154,8 @@ class WOTS(AbstractOTS):
 
     def __init__(self,
                  w: int = 16,
-                 hash_function: Callable = openssl_sha256,
-                 digestsize: int = 256,
+                 hash_function: Callable = openssl_sha512,
+                 digestsize: int = 512,
                  privkey: Optional[List[bytes]] = None,
                  pubkey: Optional[List[bytes]] = None) -> None:
         """ Initialize WOTS object
