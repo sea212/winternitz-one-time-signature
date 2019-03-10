@@ -20,7 +20,7 @@ __location__ = os.path.join(os.getcwd(), os.path.dirname(
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(0, os.path.join(__location__, '../winternitz'))
+sys.path.insert(0, os.path.join(__location__, '..'))
 
 # -- Run sphinx-apidoc ------------------------------------------------------
 # This hack is necessary since RTD does not issue `sphinx-apidoc` before running
@@ -297,5 +297,5 @@ autodoc_default_options = {
     'members': None,  # all
     'private-members': None,  # all
     'special-members': '__repr__',
-    'exclude-members': '_abc_impl'
+    'exclude-members': '_abc_impl, slots'
 }

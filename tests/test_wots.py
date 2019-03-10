@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from math import ceil, floor, log2
 from os import urandom
 
 import pytest
@@ -20,6 +21,8 @@ wotsp = None
 wotsp2 = None
 wotsp_strange_w = None
 wotsp_strange_w2 = None
+wots_def_key_count = 0
+keysize = 0
 
 
 # self is of no use since pytest creates new instances for each test function
@@ -28,7 +31,7 @@ class TestWOTS(object):
     def test_init(self):
         # Init for __function__ and getter tests
         global wots, wots2, wots_strange_w, wots_strange_w2, wotsp, wotsp2,\
-               wotsp_strange_w, wotsp_strange_w2
+               wotsp_strange_w, wotsp_strange_w2, wots_def_key_count, keysize
         wots_strange_w = winternitz.signatures.WOTS(w=13)
         wots_strange_w2 = winternitz.signatures.WOTS(w=((1 << 13) + 1917))
         wots = winternitz.signatures.WOTS(w=4)
@@ -38,12 +41,19 @@ class TestWOTS(object):
         wotsp_strange_w = winternitz.signatures.WOTSPLUS(w=13)
         wotsp_strange_w2 = winternitz.signatures.WOTSPLUS(w=((1 << 13) + 1917))
 
+        kswots = winternitz.signatures.WOTS()
+        msgkeys = int(ceil(kswots.digestsize / log2(kswots.w)))
+        cskeys = int(floor(log2(msgkeys *
+                                (kswots.w - 1)) / log2(kswots.w)) + 1)
+        wots_def_key_count = msgkeys + cskeys
+        keysize = int(ceil(kswots.digestsize / 8))
+
         # Invalid w parameter
         with pytest.raises(ValueError):
             _ = winternitz.signatures.WOTS(w=1)  # noqa
 
         with pytest.raises(ValueError):
-            _ = winternitz.signatures.WOTS(w=(1 << 257))  # noqa
+            _ = winternitz.signatures.WOTS(w=(1 << 513))  # noqa
 
         # Invalid private key size
         with pytest.raises(ValueError):
@@ -55,18 +65,18 @@ class TestWOTS(object):
 
         # Invalid size of one element of public key
         with pytest.raises(ValueError):
-            _ = winternitz.signatures.WOTS(pubkey=[urandom(1) for _  # noqa
-                                                   in range(67)])
+            _ = winternitz.signatures.WOTS(pubkey=[urandom(1) for _ in  # noqa
+                                                   range(wots_def_key_count)])
 
     def test_underscore_functions_and_getter(self):
-        global wots, wots2, wotsp, wotsp2
+        global wots, wots2, wotsp, wotsp2, wots_def_key_count, keysize
         # Object representation
         _ = str(wots2)
         _ = str(wotsp2)  # noqa: F841
 
-        # Test string representation if public key is not set
-        _ = str(winternitz.signatures.WOTS(w=16, pubkey=[urandom(32) for
-                                           _ in range(67)]))
+        # Test string representation if public key is set
+        _ = str(winternitz.signatures.WOTS(pubkey=[urandom(keysize) for
+                                           _ in range(wots_def_key_count)]))
 
         # __repr__(self) returns a string which contains the code to be
         # executed to create an equal object. eval(...) does execute this code.
@@ -91,7 +101,7 @@ class TestWOTS(object):
         # Number conversion to another base does return more numbers than
         # private keys
         with pytest.raises(IndexError):
-            wots._getSignatureBaseMessage(urandom(40))
+            wots._getSignatureBaseMessage(urandom(keysize + 1))
 
     def test_sign_and_verify_wots(self):
         global wots, wots_strange_w, wots_strange_w2
