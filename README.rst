@@ -73,7 +73,7 @@ Test
 | With tox: ``python -m tox``
 
 Generate documentation
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 ``python setup.py docs``
 
 
