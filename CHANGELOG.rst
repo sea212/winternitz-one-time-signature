@@ -14,3 +14,9 @@ Version 1.0
 - Contains AbstractOTS base class for OTS implementations in this package
 - Contains fully configurable Winternitz One-Time-Signature scheme
 - Contains fully configurable Winternitz One-Time-Signature+ scheme
+
+Version 1.0.1
+=============
+
+- Fixed bug that sign(...) returned the pubkeys (list) inside a list
+- Further examples added
