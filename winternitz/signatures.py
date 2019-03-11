@@ -469,14 +469,18 @@ class WOTS(AbstractOTS):
             "digestsize": self.__digestsize
         }
 
-    def verify(self, message: bytes, signature: List[bytes]) -> bool:
+    def getPubkeyFromSignature(self, message: bytes,
+                               signature: List[bytes]) -> List[bytes]:
         if len(signature) != self.__key_count:
             return False
 
         msghash = self.__hashfunction(message)
         msg_to_verify = self._getSignatureBaseMessage(msghash)
-        pubkey = [self._chain(signature[idx], val, self.__w - 1)
-                  for idx, val in enumerate(msg_to_verify)]
+        return [self._chain(signature[idx], val, self.__w - 1)
+                for idx, val in enumerate(msg_to_verify)]
+
+    def verify(self, message: bytes, signature: List[bytes]) -> bool:
+        pubkey = self.getPubkeyFromSignature(message, signature)
         return True if pubkey == self.pubkey else False
 
 
