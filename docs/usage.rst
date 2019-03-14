@@ -27,15 +27,13 @@ either through ``wots.pubkey`` or inside the dict that is returned by the
 In the best case a man-in-the-middle attack to modify your public key is impossible
 by the design of the application. The last step is to publish your message and every
 information in the dict that is returned by ``wots.sign(message)``, except the public
-key (since it was already published). Publishing the fingerprint is optional, since it
-is not essential for the signature verification. The signature dict contains the following
-values:
+key (since it was already published). The signature dict contains the following values:
 
 .. code-block:: python
 
     {
         "w":            winternitz parameter (Type: int),
-        "fingerprint":  message hash (Type: bytes),
+        "algorithm":    "WOTS" (Type: string),
         "hashalgo":     hash algorithm (Type: str),
         "digestsize":   hash byte count (Type: int),
         "pubkey":       public key (Type: List[bytes]),
@@ -62,6 +60,12 @@ With that data, another person can verify the authenticity of your message:
     print("Verification success: " + str(success))
     # Output: Verification success: True
 
+In certain situations it might not be wanted to verify the derived public key with the
+public key inside the executing WOTS object. For example, this can be this case when
+the verification happens in a wrapping structure, like a XMSS tree. In such cases
+the public key can be derived from a message and a signature with the function
+``wots.getPubkeyFromSignature(message=message, signature=signature)``
+
 WOTSPLUS
 --------
 .. code-block:: python
@@ -79,13 +83,15 @@ If you don't specify any values in the constructor of WOTSPLUS, it will use the 
 to *HMAC-sha256*, as well as a seed which is also generated from entropy. For further
 informations about functions and their parameters, visit the module reference in
 this documentation. Since WOTS+ uses a pseudo random function and a seed to derive signatures and public
-keys, they have to be published as well. In addition to the signature of WOTS, the returned dict contains
-the following values:
+keys, they have to be published as well. The return value from the sign(...) functions is similiar to the
+return value from WOTS.sign(...), but differs in the algorithm and contains additional values for the
+pseudo random function and the seed:
 
 .. code-block:: python
 
     {
-        # ...
+        # like in WOTS
+        "algorithm":    "WOTS+" (Type: str)
         "prf":          pseudo random function (Type: str),
         "seed":         Seed used in prf (Type: bytes)
     }
