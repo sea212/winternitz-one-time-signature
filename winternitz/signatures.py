@@ -75,10 +75,8 @@ class AbstractOTS(object, metaclass=ABCMeta):
             message: Encoded message to sign
 
         Returns:
-            A dictionary containing the fingerprint of the message, which was
-            created using the hash function that was specified during
-            initialization of this object, the signature and a public key
-            to verify the signature. Structure::
+            A dictionary containing all the information required to verify
+            the message. Minimal structure::
 
                 {
                     "w":            winternitz parameter (Type: int),
@@ -107,6 +105,28 @@ class AbstractOTS(object, metaclass=ABCMeta):
         """
 
         raise NotImplementedError("verify is essential for WOTS signatures")
+
+    @abstractmethod
+    def getPubkeyFromSignature(message: bytes, signature: List[bytes]) -> bool:
+        """ Get pubkey derived from signature
+
+        Using this function you can get the public key from the signature. In
+        contrast to verify(...), this function does not match the public key
+        against the public key stored in the executing object. Getting the
+        public key without comparing it can be useful if it is verified
+        with another method, e.g. by deriving a XMSS root node (public key)
+        and comparing it against a published XMSS public key.
+
+        Args:
+            message:    Encoded message that was signed with **signature**
+            signature:  Signature for **message**
+
+        Returns:
+            WOTS public key derived from signature
+        """
+
+        raise NotImplementedError("getPubkeyFromSignature is essential "
+                                  + "for WOTS signatures")
 
     @abstractmethod
     def __eq__(self, obj: Any) -> bool:
@@ -628,14 +648,12 @@ class WOTSPLUS(WOTS):
             message: Encoded message to sign
 
         Returns:
-            A dictionary containing the fingerprint of the message, which was
-            created using the hash function that was specified during
-            initialization of this object, the signature and a public key
-            to verify the signature. Structure::
+            A dictionary containing all the information required to verify
+            the message. Structure::
 
                 {
                     "w":            winternitz parameter (Type: int),
-                    "algorithm":    WOTS+ (Type: string),
+                    "algorithm":    "WOTS+" (Type: string),
                     "hashalgo":     hash algorithm (Type: str),
                     "digestsize":   hash byte count (Type: int),
                     "pubkey":       public key (Type: List[bytes]),
