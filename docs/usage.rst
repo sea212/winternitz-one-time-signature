@@ -63,7 +63,7 @@ With that data, another person can verify the authenticity of your message:
 In certain situations it might not be wanted to verify the derived public key with the
 public key inside the executing WOTS object. For example, this can be this case when
 the verification happens in a wrapping structure, like a XMSS tree. In such cases
-the public key can be derived from a message and a signature by the function
+the public key can be derived from a message and a signature with the function
 ``wots.getPubkeyFromSignature(message=message, signature=signature)``
 
 WOTSPLUS

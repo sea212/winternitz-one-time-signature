@@ -112,6 +112,10 @@ class TestWOTS(object):
         sig = wots.sign(message)  # noqa: F841
         assert(wots.verify(message, sig["signature"]))
 
+        # Test getPubkeyFromSignature
+        pubkey = wots.getPubkeyFromSignature(message, sig["signature"])
+        assert(wots.pubkey == pubkey)
+
         # Sign with one object, derive the public key from checksum
         sig = wots_strange_w.sign(message)
 
@@ -145,6 +149,10 @@ class TestWOTS(object):
         # Sign and verify with the same object
         sig = wotsp.sign(message)  # noqa: F841
         assert(wotsp.verify(message, sig["signature"]))
+
+        # Test getPubkeyFromSignature
+        pubkey = wotsp.getPubkeyFromSignature(message, sig["signature"])
+        assert(wotsp.pubkey == pubkey)
 
         # Sign with one object, derive the public key from checksum
         sig = wotsp_strange_w.sign(message)
