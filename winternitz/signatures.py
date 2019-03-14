@@ -82,7 +82,7 @@ class AbstractOTS(object, metaclass=ABCMeta):
 
                 {
                     "w":            winternitz parameter (Type: int),
-                    "fingerprint":  message hash (Type: bytes),
+                    "algorithm":    OTS algorithm used (Type: string),
                     "hashalgo":     hash algorithm (Type: str),
                     "digestsize":   hash byte count (Type: int),
                     "pubkey":       public key (Type: List[bytes]),
@@ -461,7 +461,7 @@ class WOTS(AbstractOTS):
                              for idx, val in enumerate(msg_to_sign)]
 
         return {
-            "fingerprint": msghash,
+            "algorithm": "WOTS",
             "signature": signature,
             "pubkey": self.__pubkey.copy(),
             "w": self.__w,
@@ -635,7 +635,7 @@ class WOTSPLUS(WOTS):
 
                 {
                     "w":            winternitz parameter (Type: int),
-                    "fingerprint":  message hash (Type: bytes),
+                    "algorithm":    WOTS+ (Type: string),
                     "hashalgo":     hash algorithm (Type: str),
                     "digestsize":   hash byte count (Type: int),
                     "pubkey":       public key (Type: List[bytes]),
@@ -645,6 +645,7 @@ class WOTSPLUS(WOTS):
                 }
         """
         ret = super().sign(message)
+        ret["algorithm"] = "WOTS+"
         ret["prf"] = self.__prf.__qualname__
         ret["seed"] = self.__seed
         return ret
